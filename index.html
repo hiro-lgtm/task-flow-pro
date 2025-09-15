@@ -26,6 +26,14 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+        window.FirebaseSDK = { initializeApp, getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, limit, getAuth, signInAnonymously, onAuthStateChanged };
+    </script>
+    
     <!-- Google Calendar API -->
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
@@ -660,25 +668,48 @@
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6">設定</h2>
                 
-                <!-- 🔄 リアルタイム同期設定 -->
+                <!-- 🔥 Firebase リアルタイム同期設定 -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                        <i class="fas fa-sync-alt mr-2 text-blue-600"></i>
-                        リアルタイム同期
-                        <span id="sync-indicator" class="sync-status ml-2">🟡</span>
+                        <i class="fas fa-cloud mr-2 text-orange-600"></i>
+                        Firebase クラウド同期
+                        <span id="firebase-status" class="sync-status ml-2">🟡</span>
                     </h3>
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-gray-700">デバイス間同期</label>
-                                <p class="text-sm text-gray-500">iPhone・iPad・PCでデータを自動同期します（完全無料）</p>
+                                <label class="text-sm font-medium text-gray-700">Firebase同期</label>
+                                <p class="text-sm text-gray-500">真のリアルタイム同期（完全無料・認証付き）</p>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="sync-toggle" class="sr-only">
+                                <input type="checkbox" id="firebase-sync-toggle" class="sr-only">
                                 <div class="w-11 h-6 bg-gray-200 rounded-full relative">
                                     <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
                                 </div>
                             </label>
+                        </div>
+                        
+                        <!-- Firebase設定フィールド -->
+                        <div id="firebase-config" class="hidden space-y-4 mt-4 p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Firebase API Key</label>
+                                <input type="text" id="firebase-api-key" placeholder="AIzaSyC..." 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                <p class="text-xs text-gray-500 mt-1">Firebase Console → プロジェクト設定 → ウェブAPIキー</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Project ID</label>
+                                <input type="text" id="firebase-project-id" placeholder="taskflow-pro-xxxxx" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                            </div>
+                            <div class="flex space-x-2">
+                                <button id="firebase-test-btn" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm">
+                                    <i class="fas fa-plug mr-1"></i>接続テスト
+                                </button>
+                                <button id="firebase-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm">
+                                    <i class="fas fa-save mr-1"></i>設定保存
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
@@ -699,6 +730,24 @@
                         
                         <div id="sync-mode-display" class="text-xs text-gray-600 mt-2 p-2 bg-gray-50 rounded">
                             <span id="sync-mode-text">同期モード確認中...</span>
+                        </div>
+                        
+                        <!-- 🔄 手動同期オプション -->
+                        <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <h4 class="font-semibold text-yellow-800 mb-2">
+                                <i class="fas fa-exchange-alt mr-2"></i>手動端末間同期
+                            </h4>
+                            <p class="text-sm text-yellow-700 mb-3">
+                                自動同期が利用できない場合の代替手段
+                            </p>
+                            <div class="space-y-2">
+                                <button id="generate-sync-qr" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm">
+                                    📱 QRコードで同期（実装予定）
+                                </button>
+                                <div class="text-xs text-yellow-600">
+                                    💡 現在：設定 → データのエクスポート/インポート で手動同期可能
+                                </div>
+                            </div>
                         </div>
                         
                         <div id="sync-status-info" class="text-sm text-gray-600">
@@ -790,7 +839,7 @@
                                 <i class="fas fa-download mr-2"></i>データをエクスポート
                             </button>
                             <button id="import-data-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm">
-                                <i class="fas fa-upload mr-2"></i>データをインポート
+                                <i class="fas fa-upload mr-2"></i>データをインポート（差分追加対応）
                             </button>
                             <button id="clear-data-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm">
                                 <i class="fas fa-trash mr-2"></i>全データをクリア
@@ -965,11 +1014,16 @@
                 this.googleAccessToken = null;
                 this.isGoogleCalendarInitialized = false;
                 
-                // 🔄 リアルタイム同期設定
-                this.syncEnabled = this.settings.syncEnabled !== false; // デフォルトで有効
+                // 🔥 Firebase同期設定
+                this.firebaseEnabled = this.settings.firebaseEnabled || false;
+                this.firebaseConfig = this.settings.firebaseConfig || null;
+                this.firebaseApp = null;
+                this.firestore = null;
+                this.auth = null;
+                this.user = null;
                 this.lastSyncTime = this.settings.lastSyncTime || 0;
                 this.syncInProgress = false;
-                this.syncInterval = null;
+                this.unsubscribeFirestore = null;
                 
                 this.init();
             }
@@ -981,9 +1035,9 @@
                 this.loadSettings();
                 this.startTimerUpdates();
                 
-                // 🔄 自動同期開始
-                if (this.syncEnabled) {
-                    this.startAutoSync();
+                // 🔥 Firebase初期化
+                if (this.firebaseEnabled && this.firebaseConfig) {
+                    setTimeout(() => this.initializeFirebase(), 1000);
                 }
                 
                 // デバッグ: 初期データの状況をログ出力
@@ -996,7 +1050,193 @@
                 }
             }
             
-            // 🔄 リアルタイム同期機能
+            // 🔥 Firebase同期機能
+            async initializeFirebase() {
+                if (!window.FirebaseSDK || !this.firebaseConfig) {
+                    console.error('❌ Firebase SDK または設定が見つかりません');
+                    this.updateFirebaseStatus('error');
+                    return;
+                }
+                
+                try {
+                    console.log('🔥 Firebase初期化開始...');
+                    
+                    const { initializeApp, getFirestore, getAuth, signInAnonymously, onAuthStateChanged } = window.FirebaseSDK;
+                    
+                    // Firebase初期化
+                    this.firebaseApp = initializeApp(this.firebaseConfig);
+                    this.firestore = getFirestore(this.firebaseApp);
+                    this.auth = getAuth(this.firebaseApp);
+                    
+                    // 匿名認証
+                    onAuthStateChanged(this.auth, (user) => {
+                        if (user) {
+                            this.user = user;
+                            console.log('✅ Firebase認証成功:', user.uid);
+                            this.startFirebaseSync();
+                        } else {
+                            console.log('🔐 Firebase匿名認証開始...');
+                            signInAnonymously(this.auth);
+                        }
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ Firebase初期化エラー:', error);
+                    this.updateFirebaseStatus('error');
+                }
+            }
+            
+            async startFirebaseSync() {
+                if (!this.firestore || !this.user) return;
+                
+                try {
+                    const { doc, onSnapshot } = window.FirebaseSDK;
+                    
+                    // リアルタイムリスナー設定
+                    const userDocRef = doc(this.firestore, 'users', this.user.uid);
+                    
+                    this.unsubscribeFirestore = onSnapshot(userDocRef, (docSnapshot) => {
+                        if (docSnapshot.exists() && !this.syncInProgress) {
+                            const data = docSnapshot.data();
+                            console.log('🔄 Firebaseからデータ受信:', data.lastModified);
+                            
+                            // ローカルより新しいデータがあれば更新
+                            if (data.lastModified > (this.lastSyncTime || 0)) {
+                                this.mergeFirebaseData(data);
+                            }
+                        }
+                    });
+                    
+                    // 初回アップロード
+                    this.uploadToFirebase();
+                    
+                    console.log('✅ Firebaseリアルタイム同期開始');
+                    this.updateFirebaseStatus('success');
+                    
+                } catch (error) {
+                    console.error('❌ Firebase同期開始エラー:', error);
+                    this.updateFirebaseStatus('error');
+                }
+            }
+            
+            async uploadToFirebase() {
+                if (!this.firestore || !this.user || this.syncInProgress) return;
+                
+                this.syncInProgress = true;
+                
+                try {
+                    const { doc, setDoc } = window.FirebaseSDK;
+                    
+                    const userData = {
+                        tasks: this.tasks,
+                        clients: this.clients,
+                        subtasks: this.subtasks,
+                        timeLogs: this.timeLogs,
+                        settings: this.settings,
+                        lastModified: Date.now(),
+                        deviceInfo: {
+                            userAgent: navigator.userAgent,
+                            timestamp: new Date().toISOString()
+                        }
+                    };
+                    
+                    const userDocRef = doc(this.firestore, 'users', this.user.uid);
+                    await setDoc(userDocRef, userData);
+                    
+                    this.lastSyncTime = userData.lastModified;
+                    console.log('📤 Firebaseアップロード完了');
+                    
+                } catch (error) {
+                    console.error('❌ Firebaseアップロードエラー:', error);
+                } finally {
+                    this.syncInProgress = false;
+                }
+            }
+            
+            mergeFirebaseData(firebaseData) {
+                console.log('📥 Firebaseデータをマージ中...');
+                
+                // タイムスタンプ比較して新しいデータを適用
+                if (firebaseData.tasks) this.tasks = firebaseData.tasks;
+                if (firebaseData.clients) this.clients = firebaseData.clients;
+                if (firebaseData.subtasks) this.subtasks = firebaseData.subtasks;
+                if (firebaseData.timeLogs) this.timeLogs = firebaseData.timeLogs;
+                if (firebaseData.settings) this.settings = { ...this.settings, ...firebaseData.settings };
+                
+                // ローカル保存
+                this.saveData();
+                
+                // UI更新
+                this.renderTasks();
+                this.renderClients();
+                this.loadSettings();
+                
+                this.lastSyncTime = firebaseData.lastModified;
+                console.log('✅ データマージ完了');
+            }
+            
+            updateFirebaseStatus(status) {
+                const indicator = document.getElementById('firebase-status');
+                if (indicator) {
+                    indicator.className = `sync-status ${status} ml-2`;
+                    indicator.textContent = status === 'success' ? '🟢' : status === 'error' ? '🔴' : '🟡';
+                }
+                
+                // モード表示を更新
+                const modeText = document.getElementById('sync-mode-text');
+                if (modeText) {
+                    if (status === 'success') {
+                        modeText.textContent = '🔥 Firebase リアルタイム同期（クラウド）';
+                    } else if (status === 'error') {
+                        modeText.textContent = '❌ Firebase接続エラー（ローカルのみ）';
+                    } else {
+                        modeText.textContent = '🟡 Firebase接続中...';
+                    }
+                }
+                
+                this.updateLastSyncDisplay();
+            }
+            
+            async testFirebaseConnection() {
+                const apiKey = document.getElementById('firebase-api-key').value;
+                const projectId = document.getElementById('firebase-project-id').value;
+                
+                if (!apiKey || !projectId) {
+                    alert('API KeyとProject IDの両方を入力してください');
+                    return;
+                }
+                
+                try {
+                    this.updateFirebaseStatus('syncing');
+                    
+                    const config = {
+                        apiKey: apiKey,
+                        authDomain: `${projectId}.firebaseapp.com`,
+                        projectId: projectId,
+                        storageBucket: `${projectId}.appspot.com`,
+                        messagingSenderId: "123456789",
+                        appId: "1:123456789:web:abcdef"
+                    };
+                    
+                    // テスト初期化
+                    const { initializeApp, getFirestore, getAuth, signInAnonymously } = window.FirebaseSDK;
+                    const testApp = initializeApp(config, 'test-app');
+                    const testAuth = getAuth(testApp);
+                    
+                    await signInAnonymously(testAuth);
+                    
+                    this.firebaseConfig = config;
+                    this.updateFirebaseStatus('success');
+                    alert('✅ Firebase接続テスト成功！設定を保存してください。');
+                    
+                } catch (error) {
+                    console.error('❌ Firebase接続テストエラー:', error);
+                    this.updateFirebaseStatus('error');
+                    alert('❌ Firebase接続テストに失敗しました。設定を確認してください。\n\nエラー: ' + error.message);
+                }
+            }
+            
+            // 🔄 リアルタイム同期機能（旧APIバージョン - 非推奨）
             async syncWithAPI() {
                 if (this.syncInProgress || !this.syncEnabled) return;
                 
@@ -1182,6 +1422,49 @@
                 this.syncWithAPI();
             }
             
+            saveFirebaseSettings() {
+                const apiKey = document.getElementById('firebase-api-key').value;
+                const projectId = document.getElementById('firebase-project-id').value;
+                
+                if (!apiKey || !projectId) {
+                    alert('API KeyとProject IDの両方を入力してください');
+                    return;
+                }
+                
+                this.firebaseConfig = {
+                    apiKey: apiKey,
+                    authDomain: `${projectId}.firebaseapp.com`,
+                    projectId: projectId,
+                    storageBucket: `${projectId}.appspot.com`,
+                    messagingSenderId: "123456789",
+                    appId: "1:123456789:web:abcdef"
+                };
+                
+                this.firebaseEnabled = true;
+                this.saveSettings();
+                
+                // Firebase初期化
+                this.initializeFirebase();
+                
+                alert('✅ Firebase設定を保存しました。同期を開始します。');
+            }
+            
+            stopFirebaseSync() {
+                if (this.unsubscribeFirestore) {
+                    this.unsubscribeFirestore();
+                    this.unsubscribeFirestore = null;
+                }
+                
+                this.firebaseApp = null;
+                this.firestore = null;
+                this.auth = null;
+                this.user = null;
+                this.firebaseEnabled = false;
+                
+                this.updateFirebaseStatus('error');
+                console.log('🔥 Firebase同期を停止しました');
+            }
+            
             stopAutoSync() {
                 if (this.syncInterval) {
                     clearInterval(this.syncInterval);
@@ -1230,21 +1513,29 @@
                 this.bindGanttEvents();
                 
                 // 設定
-                // 🔄 同期設定
-                const syncToggleEl = document.getElementById('sync-toggle');
-                if (syncToggleEl) {
-                    syncToggleEl.addEventListener('change', (e) => {
-                        this.syncEnabled = e.target.checked;
-                        console.log('🔄 同期設定変更:', this.syncEnabled);
-                        if (this.syncEnabled) {
-                            this.startAutoSync();
+                // 🔥 Firebase設定
+                const firebaseSyncToggle = document.getElementById('firebase-sync-toggle');
+                if (firebaseSyncToggle) {
+                    firebaseSyncToggle.addEventListener('change', (e) => {
+                        const configPanel = document.getElementById('firebase-config');
+                        if (e.target.checked) {
+                            configPanel.classList.remove('hidden');
                         } else {
-                            this.stopAutoSync();
+                            configPanel.classList.add('hidden');
+                            this.firebaseEnabled = false;
+                            this.stopFirebaseSync();
                         }
-                        this.saveSettings();
                     });
-                } else {
-                    console.error('❌ sync-toggle要素が見つかりません');
+                }
+                
+                const firebaseTestBtn = document.getElementById('firebase-test-btn');
+                if (firebaseTestBtn) {
+                    firebaseTestBtn.addEventListener('click', () => this.testFirebaseConnection());
+                }
+                
+                const firebaseSaveBtn = document.getElementById('firebase-save-btn');
+                if (firebaseSaveBtn) {
+                    firebaseSaveBtn.addEventListener('click', () => this.saveFirebaseSettings());
                 }
                 
                 document.getElementById('calendar-sync-toggle').addEventListener('change', (e) => {
@@ -1313,9 +1604,9 @@
                 localStorage.setItem('taskflow_subtasks', JSON.stringify(this.subtasks));
                 localStorage.setItem('taskflow_time_logs', JSON.stringify(this.timeLogs));
                 
-                // 🔄 データ変更時に同期トリガー
-                if (this.syncEnabled && !this.syncInProgress) {
-                    setTimeout(() => this.syncWithAPI(), 1000); // 1秒後に同期
+                // 🔥 Firebase同期トリガー
+                if (this.firebaseEnabled && this.firestore && this.user && !this.syncInProgress) {
+                    setTimeout(() => this.uploadToFirebase(), 500); // 0.5秒後に同期
                 }
             }
             
@@ -1325,21 +1616,38 @@
                     calendarId: document.getElementById('calendar-id').value,
                     googleApiKey: document.getElementById('google-api-key').value,
                     googleClientId: document.getElementById('google-client-id').value,
-                    desktopNotifications: document.getElementById('desktop-notifications-toggle').checked
+                    desktopNotifications: document.getElementById('desktop-notifications-toggle').checked,
+                    // 🔥 Firebase設定を追加
+                    firebaseEnabled: this.firebaseEnabled,
+                    firebaseConfig: this.firebaseConfig,
+                    lastSyncTime: this.lastSyncTime
                 };
                 this.settings = settings;
                 localStorage.setItem('taskflow_settings', JSON.stringify(settings));
             }
             
             loadSettings() {
-                // 🔄 同期設定の読み込み
-                const syncToggle = document.getElementById('sync-toggle');
-                if (syncToggle) {
-                    syncToggle.checked = this.syncEnabled;
-                    console.log('🔄 同期トグル設定:', this.syncEnabled);
-                } else {
-                    console.warn('⚠️ sync-toggleが見つかりません');
+                // 🔥 Firebase設定の読み込み
+                const firebaseSyncToggle = document.getElementById('firebase-sync-toggle');
+                if (firebaseSyncToggle) {
+                    firebaseSyncToggle.checked = this.firebaseEnabled;
+                    if (this.firebaseEnabled) {
+                        document.getElementById('firebase-config').classList.remove('hidden');
+                    }
                 }
+                
+                if (this.firebaseConfig) {
+                    const apiKeyField = document.getElementById('firebase-api-key');
+                    const projectIdField = document.getElementById('firebase-project-id');
+                    
+                    if (apiKeyField && this.firebaseConfig.apiKey) {
+                        apiKeyField.value = this.firebaseConfig.apiKey;
+                    }
+                    if (projectIdField && this.firebaseConfig.projectId) {
+                        projectIdField.value = this.firebaseConfig.projectId;
+                    }
+                }
+                
                 this.updateLastSyncDisplay();
                 
                 if (this.settings.calendarSync) {
@@ -2669,20 +2977,7 @@
                 reader.onload = (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
-                        
-                        if (confirm('現在のデータを上書きしますか？この操作は元に戻せません。')) {
-                            this.tasks = data.tasks || [];
-                            this.clients = data.clients || [];
-                            this.subtasks = data.subtasks || [];
-                            this.timeLogs = data.timeLogs || [];
-                            this.settings = data.settings || {};
-                            
-                            this.saveData();
-                            this.loadSettings();
-                            this.renderTasks();
-                            
-                            alert('データのインポートが完了しました。');
-                        }
+                        this.showImportOptions(data);
                     } catch (error) {
                         alert('ファイルの読み込みに失敗しました。正しいJSONファイルを選択してください。');
                     }
@@ -2691,6 +2986,209 @@
                 
                 // ファイル入力をリセット
                 event.target.value = '';
+            }
+            
+            showImportOptions(importData) {
+                // インポート方式選択ダイアログを表示
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                            <i class="fas fa-upload mr-2 text-blue-600"></i>
+                            データインポート方式を選択
+                        </h3>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div class="border border-gray-200 rounded-lg p-3">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="import-mode" value="merge" class="mr-3" checked>
+                                    <div>
+                                        <div class="font-medium text-green-700">📈 差分追加（推奨）</div>
+                                        <div class="text-sm text-gray-600">重複していない新しいデータのみ追加</div>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-3">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="import-mode" value="replace" class="mr-3">
+                                    <div>
+                                        <div class="font-medium text-red-700">🔄 完全置き換え</div>
+                                        <div class="text-sm text-gray-600">現在のデータを完全に置き換え（従来方式）</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                            <div class="text-sm text-blue-800">
+                                <strong>プレビュー:</strong><br>
+                                タスク: ${importData.tasks?.length || 0}件、
+                                顧客: ${importData.clients?.length || 0}件、
+                                サブタスク: ${importData.subtasks?.length || 0}件
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <button id="import-cancel-btn" 
+                                    class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md">
+                                キャンセル
+                            </button>
+                            <button id="import-execute-btn" 
+                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+                                実行
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // イベントリスナー追加
+                modal.querySelector('#import-cancel-btn').addEventListener('click', () => {
+                    modal.remove();
+                });
+                
+                modal.querySelector('#import-execute-btn').addEventListener('click', () => {
+                    const mode = modal.querySelector('input[name="import-mode"]:checked').value;
+                    if (mode === 'merge') {
+                        this.mergeImportData(importData);
+                    } else {
+                        this.replaceImportData(importData);
+                    }
+                    modal.remove();
+                });
+            }
+            
+            mergeImportData(importData) {
+                let stats = {
+                    tasksAdded: 0,
+                    clientsAdded: 0,
+                    subtasksAdded: 0,
+                    timeLogsAdded: 0,
+                    duplicatesSkipped: 0
+                };
+                
+                // タスクの差分追加
+                if (importData.tasks) {
+                    importData.tasks.forEach(newTask => {
+                        const exists = this.tasks.find(task => 
+                            task.id === newTask.id || 
+                            (task.title === newTask.title && task.deadline === newTask.deadline)
+                        );
+                        if (!exists) {
+                            // 新しいIDを生成（既存IDとの重複を避ける）
+                            if (!newTask.id || this.tasks.find(t => t.id === newTask.id)) {
+                                newTask.id = 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                            }
+                            this.tasks.push(newTask);
+                            stats.tasksAdded++;
+                        } else {
+                            stats.duplicatesSkipped++;
+                        }
+                    });
+                }
+                
+                // 顧客の差分追加
+                if (importData.clients) {
+                    importData.clients.forEach(newClient => {
+                        const exists = this.clients.find(client => 
+                            client.id === newClient.id || 
+                            (client.name === newClient.name && client.company === newClient.company)
+                        );
+                        if (!exists) {
+                            if (!newClient.id || this.clients.find(c => c.id === newClient.id)) {
+                                newClient.id = 'client_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                            }
+                            this.clients.push(newClient);
+                            stats.clientsAdded++;
+                        } else {
+                            stats.duplicatesSkipped++;
+                        }
+                    });
+                }
+                
+                // サブタスクの差分追加
+                if (importData.subtasks) {
+                    importData.subtasks.forEach(newSubtask => {
+                        const exists = this.subtasks.find(subtask => 
+                            subtask.id === newSubtask.id ||
+                            (subtask.parent_task_id === newSubtask.parent_task_id && subtask.title === newSubtask.title)
+                        );
+                        if (!exists) {
+                            if (!newSubtask.id || this.subtasks.find(s => s.id === newSubtask.id)) {
+                                newSubtask.id = 'subtask_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                            }
+                            this.subtasks.push(newSubtask);
+                            stats.subtasksAdded++;
+                        } else {
+                            stats.duplicatesSkipped++;
+                        }
+                    });
+                }
+                
+                // 時間ログの差分追加
+                if (importData.timeLogs) {
+                    importData.timeLogs.forEach(newLog => {
+                        const exists = this.timeLogs.find(log => 
+                            log.id === newLog.id ||
+                            (log.task_id === newLog.task_id && log.start_time === newLog.start_time)
+                        );
+                        if (!exists) {
+                            if (!newLog.id || this.timeLogs.find(l => l.id === newLog.id)) {
+                                newLog.id = 'timelog_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                            }
+                            this.timeLogs.push(newLog);
+                            stats.timeLogsAdded++;
+                        } else {
+                            stats.duplicatesSkipped++;
+                        }
+                    });
+                }
+                
+                // 設定は重複チェックせずマージ
+                if (importData.settings) {
+                    this.settings = { ...this.settings, ...importData.settings };
+                }
+                
+                this.saveData();
+                this.loadSettings();
+                this.renderTasks();
+                this.renderClients();
+                
+                // 詳細な結果表示
+                const message = `📈 差分インポート完了！
+
+✅ 追加されたデータ:
+• タスク: ${stats.tasksAdded}件
+• 顧客: ${stats.clientsAdded}件  
+• サブタスク: ${stats.subtasksAdded}件
+• 時間ログ: ${stats.timeLogsAdded}件
+
+⏭️ スキップ（重複）: ${stats.duplicatesSkipped}件`;
+                
+                alert(message);
+                console.log('📊 インポート統計:', stats);
+            }
+            
+            replaceImportData(importData) {
+                if (!confirm('現在のデータを完全に置き換えますか？この操作は元に戻せません。')) {
+                    return;
+                }
+                
+                this.tasks = importData.tasks || [];
+                this.clients = importData.clients || [];
+                this.subtasks = importData.subtasks || [];
+                this.timeLogs = importData.timeLogs || [];
+                this.settings = importData.settings || {};
+                
+                this.saveData();
+                this.loadSettings();
+                this.renderTasks();
+                this.renderClients();
+                
+                alert('データの完全置き換えが完了しました。');
             }
             
             clearAllData() {
