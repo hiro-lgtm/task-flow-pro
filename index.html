@@ -1093,14 +1093,14 @@
                     // Firebase SDK 完全読み込み確認
                     if (!window.FirebaseSDK) {
                         console.error('❌ Firebase SDK が読み込まれていません');
-                        setTimeout(() => this.initializeFirebase(), 2000); // 2秒後に再試行
-                        return;
+                        this.updateFirebaseStatus('error');
+                        return Promise.reject(new Error('Firebase SDK not loaded'));
                     }
                     
                     if (!this.firebaseConfig) {
                         console.error('❌ Firebase設定が見つかりません');
                         this.updateFirebaseStatus('error');
-                        return;
+                        return Promise.reject(new Error('Firebase config missing'));
                     }
                     
                     console.log('🔥 Firebase初期化開始...', {
@@ -1126,6 +1126,22 @@
                     this.firebaseApp = initializeApp(adjustedConfig);
                     this.firestore = getFirestore(this.firebaseApp);
                     this.auth = getAuth(this.firebaseApp);
+                    
+                    // Auth初期化の確認と待機
+                    if (!this.auth) {
+                        throw new Error('Firebase Auth initialization failed');
+                    }
+                    
+                    // Auth準備完了まで少し待機
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    console.log('✅ Firebase初期化完了:', {
+                        app: !!this.firebaseApp,
+                        firestore: !!this.firestore,
+                        auth: !!this.auth,
+                        authReady: this.auth && typeof this.auth.currentUser !== 'undefined',
+                        config: adjustedConfig.projectId
+                    });
                     
                     // 広告ブロッカー対策: オフライン永続化を有効にする
                     try {
@@ -1166,6 +1182,8 @@
                 } catch (error) {
                     console.error('❌ Firebase初期化エラー:', error);
                     this.updateFirebaseStatus('error');
+                    this.enableGoogleSigninBtn(); // エラー時もボタンは有効化
+                    return Promise.reject(error);
                 }
             }
             
@@ -1492,7 +1510,10 @@
                 const userPhoto = document.getElementById('user-photo');
                 
                 if (authStatus) authStatus.textContent = '🟢';
-                if (signinBtn) signinBtn.style.display = 'none';
+                if (signinBtn) {
+                    signinBtn.style.display = 'none';
+                    signinBtn.disabled = false; // 再有効化
+                }
                 if (signoutBtn) signoutBtn.style.display = 'block';
                 if (userInfo) userInfo.classList.remove('hidden');
                 if (userName) userName.textContent = user.displayName || 'ユーザー';
@@ -1507,65 +1528,161 @@
                 }
             }
             
+            disableGoogleSigninBtn() {
+                // 認証処理中はボタンを無効化
+                const signinBtn = document.getElementById('google-signin-btn');
+                if (signinBtn) {
+                    signinBtn.disabled = true;
+                    signinBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>初期化中...';
+                }
+            }
+            
+            enableGoogleSigninBtn() {
+                // 認証準備完了でボタンを有効化  
+                const signinBtn = document.getElementById('google-signin-btn');
+                if (signinBtn) {
+                    signinBtn.disabled = false;
+                    signinBtn.innerHTML = '<i class="fab fa-google mr-2"></i>Googleでログイン';
+                }
+            }
+            
             async signInWithGoogle() {
                 try {
-                    // ブラウザ検出
-                    const isArcBrowser = navigator.userAgent.includes('Arc') || 
-                                       window.navigator.userAgent.includes('Arc') ||
-                                       /Arc\//.test(navigator.userAgent);
+                    console.log('🔐 Google認証開始...');
                     
-                    if (isArcBrowser) {
-                        console.log('🌐 Arcブラウザを検出');
+                    // Firebase初期化状況の詳細確認
+                    console.log('🔍 Firebase状態確認:', {
+                        firebaseApp: !!this.firebaseApp,
+                        auth: !!this.auth,
+                        firestore: !!this.firestore,
+                        config: !!this.firebaseConfig,
+                        authReady: this.auth && typeof this.auth.currentUser !== 'undefined'
+                    });
+                    
+                    // Firebase未初期化の場合は強制初期化
+                    if (!this.firebaseApp || !this.auth) {
+                        console.log('🔄 Firebase強制初期化実行...');
                         
-                        // Arc用の警告メッセージ
-                        const useArc = confirm(
-                            '🌐 Arcブラウザを検出しました\n\n' +
-                            'Arcブラウザでは認証が不安定な場合があります。\n\n' +
-                            '✅ 続行する（Arcで試行）\n' +
-                            '❌ キャンセル（Chrome推奨）\n\n' +
-                            'Arcで問題が発生した場合は、Chrome/Safari/Edgeをご利用ください。'
-                        );
+                        if (!this.firebaseConfig) {
+                            alert('❌ Firebase設定が必要です。\n\n1. API Key を入力\n2. Project ID を入力\n3. 「設定保存」をクリック');
+                            return;
+                        }
                         
-                        if (!useArc) {
-                            alert('Chrome、Safari、Edgeなどのブラウザでのご利用をお勧めします。');
+                        // 強制的にFirebaseを初期化
+                        await this.initializeFirebase();
+                        
+                        // 初期化完了まで少し待機
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        
+                        if (!this.auth) {
+                            alert('❌ Firebase初期化に失敗しました。ページを再読み込みしてください。');
                             return;
                         }
                     }
                     
-                    // Firebase SDK の安全な読み込み確認
-                    if (!window.FirebaseSDK) {
-                        alert('❌ Firebase SDK が読み込まれていません。ページを再読み込みしてください。');
+                    // Firebase SDK確認
+                    if (!window.FirebaseSDK || !window.FirebaseSDK.GoogleAuthProvider) {
+                        console.error('❌ Firebase SDK未読み込み');
+                        alert('❌ ページを再読み込みしてから再試行してください。');
                         return;
                     }
                     
-                    const { GoogleAuthProvider, signInWithRedirect, getRedirectResult } = window.FirebaseSDK;
+                    // ブラウザ検出
+                    const isArcBrowser = navigator.userAgent.includes('Arc') || 
+                                       /Arc\//.test(navigator.userAgent);
+                    
+                    // Arc対応の強化
+                    if (isArcBrowser) {
+                        console.log('🌐 Arcブラウザ対応モードを有効化');
+                        
+                        // Arcでのポップアップブロック対策
+                        const enablePopup = confirm(
+                            '🌐 Arcブラウザでの認証設定\n\n' +
+                            '以下の設定を確認してください：\n' +
+                            '1. ポップアップを許可\n' +
+                            '2. JavaScriptを有効化\n' +
+                            '3. サードパーティCookieを許可\n\n' +
+                            '設定完了後「OK」を押してください'
+                        );
+                        
+                        if (!enablePopup) {
+                            alert('Arc設定を確認してから再試行してください');
+                            return;
+                        }
+                    }
+                    
+                    const { GoogleAuthProvider, signInWithRedirect, getRedirectResult, signInWithPopup } = window.FirebaseSDK;
                     const provider = new GoogleAuthProvider();
                     
-                    // Arcブラウザの場合はより安全なスコープ設定
+                    // Arc専用の設定
                     if (isArcBrowser) {
+                        // 必要最小限のスコープ
                         provider.addScope('profile');
                         provider.addScope('email');
                         provider.setCustomParameters({
-                            prompt: 'select_account'
+                            prompt: 'select_account',
+                            include_granted_scopes: true,
+                            access_type: 'online'  // Arcの制限に対応
                         });
+                        console.log('🔧 Arc専用プロバイダー設定完了');
                     }
                     
                     // 既にリダイレクト結果があるかチェック
-                    const result = await getRedirectResult(this.auth);
-                    
-                    if (result) {
-                        // リダイレクトから戻ってきた場合
-                        const user = result.user;
-                        console.log('✅ Google認証成功（リダイレクト）:', user.email);
-                        this.updateGoogleAuthUI(user);
-                        return;
+                    try {
+                        const result = await getRedirectResult(this.auth);
+                        
+                        if (result) {
+                            const user = result.user;
+                            console.log('✅ Google認証成功（リダイレクト）:', user.email);
+                            this.updateGoogleAuthUI(user);
+                            return;
+                        }
+                    } catch (redirectError) {
+                        console.log('ℹ️ リダイレクト結果確認エラー（正常）:', redirectError.message);
                     }
                     
-                    // Arcブラウザの場合は直接リダイレクトを使用
+                    // Arc専用の認証戦略
                     if (isArcBrowser) {
-                        console.log('🔄 Arcブラウザ用リダイレクト認証開始');
-                        await signInWithRedirect(this.auth, provider);
-                        return;
+                        console.log('🔄 Arc専用認証フロー開始');
+                        
+                        // 方法1: まずポップアップを試行（Arc最新版対応）
+                        try {
+                            console.log('🪟 ポップアップ認証を試行...');
+                            const popupResult = await signInWithPopup(this.auth, provider);
+                            const user = popupResult.user;
+                            console.log('✅ Arc ポップアップ認証成功:', user.email);
+                            this.updateGoogleAuthUI(user);
+                            return;
+                            
+                        } catch (popupError) {
+                            console.log('⚠️ ポップアップ失敗、リダイレクトに切り替え:', popupError.code);
+                            
+                            if (popupError.code === 'auth/popup-blocked' || 
+                                popupError.code === 'auth/popup-closed-by-user' ||
+                                popupError.code === 'auth/cancelled-popup-request') {
+                                
+                                // 方法2: リダイレクトに切り替え
+                                console.log('🔄 Arcリダイレクト認証に切り替え');
+                                
+                                // ユーザーにリダイレクトを説明
+                                const proceedRedirect = confirm(
+                                    '🔄 認証方式切り替え\n\n' +
+                                    'ポップアップがブロックされました。\n' +
+                                    'Googleログインページにリダイレクトします。\n\n' +
+                                    'OK → Google認証ページへ移動\n' +
+                                    'キャンセル → 認証を中止'
+                                );
+                                
+                                if (proceedRedirect) {
+                                    await signInWithRedirect(this.auth, provider);
+                                } else {
+                                    console.log('ユーザーが認証をキャンセル');
+                                }
+                                return;
+                            } else {
+                                throw popupError; // その他のエラーは外側でキャッチ
+                            }
+                        }
                     }
                     
                     // 他のブラウザはポップアップを試行
@@ -1902,11 +2019,23 @@
                     appId: "1:123456789:web:abcdef"
                 };
                 
+                console.log('💾 Firebase設定保存:', {
+                    projectId: projectId,
+                    authDomain: this.firebaseConfig.authDomain
+                });
+                
                 this.firebaseEnabled = true;
                 this.saveSettings();
                 
+                // ボタンを一時無効化
+                this.disableGoogleSigninBtn();
+                
                 // Firebase初期化
-                this.initializeFirebase();
+                this.initializeFirebase().then(() => {
+                    alert('✅ Firebase設定を保存しました。\n「Googleでログイン」が利用可能になります。');
+                }).catch((error) => {
+                    alert('❌ Firebase初期化エラー: ' + error.message);
+                });
                 
                 alert('✅ Firebase設定を保存しました。同期を開始します。');
             }
