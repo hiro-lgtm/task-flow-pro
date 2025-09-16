@@ -789,7 +789,10 @@
                         <div id="firebase-config" class="space-y-4 mt-4 p-4 bg-gray-50 rounded-lg border-l-4 border-orange-500">
                             <div class="bg-blue-50 p-3 rounded-md mb-4">
                                 <h4 class="text-sm font-medium text-blue-800 mb-1">🔥 Firebase設定が必要</h4>
-                                <p class="text-xs text-blue-700">Google認証とリアルタイム同期を使用するには、まずFirebase設定を完了してください。</p>
+                                <p class="text-xs text-blue-700 mb-2">Google認証とリアルタイム同期を使用するには、まずFirebase設定を完了してください。</p>
+                                <p class="text-xs text-blue-600">
+                                    📚 <strong>設定でお困りの場合</strong>: docs/FIREBASE-SETUP.md で詳細な手順を確認してください
+                                </p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Firebase API Key</label>
@@ -1143,10 +1146,8 @@
                 this.loadSettings();
                 this.startTimerUpdates();
                 
-                // 🔥 Firebase初期化
-                if (this.firebaseEnabled && this.firebaseConfig) {
-                    setTimeout(() => this.initializeFirebase(), 1000);
-                }
+                // 🔥 Firebase初期化（設定の有無に関わらず実行）
+                setTimeout(() => this.initializeFirebase(), 1000);
                 
                 // デバッグ: 初期データの状況をログ出力
                 console.log('🚀 TaskFlow Pro 初期化完了');
@@ -1170,6 +1171,7 @@
                     
                     if (!this.firebaseConfig) {
                         console.log('⚠️ Firebase設定がまだ完了していません');
+                        console.log('🔧 Google認証ボタンを設定誘導モードに切り替え');
                         this.updateFirebaseStatus('pending');
                         // Google認証ボタンは有効なままにして設定を促す
                         this.enableGoogleSigninBtnWithConfig();
@@ -1647,28 +1649,45 @@
                 if (signinBtn) {
                     signinBtn.disabled = false;
                     signinBtn.innerHTML = '<i class="fab fa-google mr-2"></i>Googleでログイン';
+                    // 設定不完了フラグを削除
+                    signinBtn.removeAttribute('data-config-incomplete');
                 }
             }
             
             enableGoogleSigninBtnWithConfig() {
                 // Firebase設定が未完了でも認証ボタンを有効化（設定画面への誘導付き）
+                console.log('🔧 enableGoogleSigninBtnWithConfig() 実行');
                 const signinBtn = document.getElementById('google-signin-btn');
                 if (signinBtn) {
                     signinBtn.disabled = false;
                     signinBtn.innerHTML = '<i class="fas fa-cog mr-2"></i>まずFirebase設定を完了';
-                    signinBtn.onclick = () => {
-                        // Firebase設定エリアにスクロール
-                        document.getElementById('firebase-config').scrollIntoView({ behavior: 'smooth' });
-                        // API Keyフィールドにフォーカス
-                        setTimeout(() => {
-                            document.getElementById('firebase-api-key').focus();
-                        }, 500);
-                    };
+                    // データ属性で設定不完了状態をマーク
+                    signinBtn.setAttribute('data-config-incomplete', 'true');
+                    console.log('✅ Google認証ボタンを設定誘導モードに変更');
+                } else {
+                    console.error('❌ Google認証ボタンが見つかりません');
                 }
             }
             
             async signInWithGoogle() {
                 try {
+                    // 設定不完了状態の早期チェック
+                    const signinBtn = document.getElementById('google-signin-btn');
+                    if (signinBtn && signinBtn.getAttribute('data-config-incomplete') === 'true') {
+                        // Firebase設定パネルにスクロール
+                        const configPanel = document.getElementById('firebase-config');
+                        if (configPanel) {
+                            configPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            setTimeout(() => {
+                                const apiKeyField = document.getElementById('firebase-api-key');
+                                if (apiKeyField) {
+                                    apiKeyField.focus();
+                                }
+                            }, 500);
+                        }
+                        return; // 処理を停止
+                    }
+
                     console.log('🔐 Google認証開始...');
                     
                     // Firebase初期化状況の詳細確認
@@ -1685,7 +1704,23 @@
                         console.log('🔄 Firebase強制初期化実行...');
                         
                         if (!this.firebaseConfig) {
-                            alert('❌ Firebase設定が必要です。\n\n1. API Key を入力\n2. Project ID を入力\n3. 「設定保存」をクリック');
+                            // Firebase設定パネルにスクロールして、フォーカスを当てる
+                            const configPanel = document.getElementById('firebase-config');
+                            if (configPanel) {
+                                configPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                
+                                // APIキーフィールドをハイライト
+                                setTimeout(() => {
+                                    const apiKeyField = document.getElementById('firebase-api-key');
+                                    if (apiKeyField) {
+                                        apiKeyField.focus();
+                                        apiKeyField.style.borderColor = '#f59e0b';
+                                        apiKeyField.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.1)';
+                                    }
+                                }, 500);
+                            }
+                            
+                            alert('❌ Firebase設定が必要です。\n\n1. 下のフォームにAPI Key を入力\n2. Project ID を入力\n3. 「設定保存」をクリック\n\nその後、Google認証が利用可能になります。');
                             return;
                         }
                         
@@ -1918,12 +1953,28 @@
                         appId: "1:123456789:web:abcdef"
                     };
                     
-                    // テスト初期化
-                    const { initializeApp, getFirestore, getAuth, signInAnonymously } = window.FirebaseSDK;
-                    const testApp = initializeApp(config, 'test-app');
-                    const testAuth = getAuth(testApp);
+                    // 🔒 セキュア接続テスト（認証不要）
+                    console.log('🔥 Firebase接続テスト開始（セキュアモード）');
+                    const { initializeApp, getFirestore, getAuth } = window.FirebaseSDK;
                     
-                    await signInAnonymously(testAuth);
+                    // Firebase初期化テスト
+                    const testApp = initializeApp(config, 'test-app');
+                    console.log('✅ Firebase App初期化成功');
+                    
+                    // Firestore初期化テスト（データアクセスなし）
+                    const testFirestore = getFirestore(testApp);
+                    console.log('✅ Firestore初期化成功');
+                    
+                    // Auth初期化テスト（サインインなし）
+                    const testAuth = getAuth(testApp);
+                    console.log('✅ Firebase Auth初期化成功');
+                    
+                    // 設定が有効であることを確認
+                    if (!testApp || !testFirestore || !testAuth) {
+                        throw new Error('Firebase初期化に失敗しました');
+                    }
+                    
+                    console.log('🎉 すべてのFirebaseサービス初期化完了');
                     
                     this.firebaseConfig = config;
                     this.updateFirebaseStatus('success');
@@ -1932,7 +1983,31 @@
                 } catch (error) {
                     console.error('❌ Firebase接続テストエラー:', error);
                     this.updateFirebaseStatus('error');
-                    alert('❌ Firebase接続テストに失敗しました。設定を確認してください。\n\nエラー: ' + error.message);
+                    
+                    // エラーの種類に応じた具体的な解決策を提示
+                    let errorMessage = '❌ Firebase接続テストに失敗しました。\n\n';
+                    let solution = '';
+                    
+                    if (error.code === 'auth/admin-restricted-operation') {
+                        solution = '🔥 Firebase Console で以下を設定してください：\n\n' +
+                                 '1. Authentication を有効化\n' +
+                                 '2. Sign-in method で Google プロバイダーを追加\n' +
+                                 '3. 承認済みドメイン に現在のドメインを追加\n\n' +
+                                 '詳細は docs/FIREBASE-SETUP.md を参照してください。';
+                    } else if (error.code === 'auth/invalid-api-key') {
+                        solution = '🔑 API Key が正しくありません：\n\n' +
+                                 '• Firebase Console → プロジェクト設定 → 全般\n' +
+                                 '• ウェブ API キーをコピーして再入力してください';
+                    } else if (error.code === 'auth/project-not-found') {
+                        solution = '📁 Project ID が正しくありません：\n\n' +
+                                 '• Firebase Console でプロジェクト ID を確認\n' +
+                                 '• 正確なプロジェクト ID を再入力してください';
+                    } else {
+                        solution = '⚠️ その他のエラー：\n' + error.message + '\n\n' +
+                                 'Firebase Console の設定を確認してください。';
+                    }
+                    
+                    alert(errorMessage + solution);
                 }
             }
             
