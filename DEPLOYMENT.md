@@ -23,15 +23,18 @@ npx http-server
 ```
 
 ### 対応ブラウザ
-- ✅ **Chrome/Edge** - 完全対応
-- ✅ **Safari** - 完全対応  
+- ✅ **Chrome/Edge** - 完全対応・推奨
+- ✅ **Safari** - 完全対応・推奨  
 - ✅ **Firefox** - 完全対応
-- ⚠️ **Arc** - 対応済み（Firebase SDK読み込み強化）
+- ✅ **GenSpark** - 完全対応・推奨
+- ✅ **iPhone Safari** - 完全対応
+- ✅ **Arc** - 完全対応（専用認証フロー実装済み）
 
 ### トラブルシューティング
 1. **認証エラー** → Firebase Console で承認済みドメイン確認
 2. **同期しない** → Ctrl+Shift+R でハードリフレッシュ
-3. **Arc問題** → Firebase SDK読み込み確認、他ブラウザも試行
+3. **Arcブラウザ** → ARC-SETUP.md の設定ガイドを参照
+4. **最も安定** → GenSpark上での利用が最適
 
 ## 📱 PWA対応
 - ✅ manifest.json 設定済み
