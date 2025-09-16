@@ -143,6 +143,75 @@
             70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
+
+        /* Toggle Switch スタイル */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #3b82f6;
+        }
+
+        .toggle-switch input:focus + .toggle-slider {
+            box-shadow: 0 0 1px #3b82f6;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            -webkit-transform: translateX(20px);
+            -ms-transform: translateX(20px);
+            transform: translateX(20px);
+        }
+
+        /* Disabled state */
+        .toggle-switch input:disabled + .toggle-slider {
+            background-color: #e5e7eb;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .toggle-switch input:disabled + .toggle-slider:before {
+            background-color: #f3f4f6;
+        }
+
+        .toggle-switch.disabled {
+            pointer-events: none;
+        }
         
         /* ガントチャートスタイル */
         .gantt-container {
@@ -710,16 +779,18 @@
                                 <label class="text-sm font-medium text-gray-700">Firebase同期</label>
                                 <p class="text-sm text-gray-500">Google認証後に自動有効化</p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="firebase-sync-toggle" class="sr-only" disabled>
-                                <div class="w-11 h-6 bg-gray-200 rounded-full relative">
-                                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
-                                </div>
+                            <label class="toggle-switch disabled">
+                                <input type="checkbox" id="firebase-sync-toggle" disabled>
+                                <span class="toggle-slider"></span>
                             </label>
                         </div>
                         
                         <!-- Firebase設定フィールド -->
-                        <div id="firebase-config" class="hidden space-y-4 mt-4 p-4 bg-gray-50 rounded-lg">
+                        <div id="firebase-config" class="space-y-4 mt-4 p-4 bg-gray-50 rounded-lg border-l-4 border-orange-500">
+                            <div class="bg-blue-50 p-3 rounded-md mb-4">
+                                <h4 class="text-sm font-medium text-blue-800 mb-1">🔥 Firebase設定が必要</h4>
+                                <p class="text-xs text-blue-700">Google認証とリアルタイム同期を使用するには、まずFirebase設定を完了してください。</p>
+                            </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Firebase API Key</label>
                                 <input type="text" id="firebase-api-key" placeholder="AIzaSyC..." 
@@ -1098,9 +1169,11 @@
                     }
                     
                     if (!this.firebaseConfig) {
-                        console.error('❌ Firebase設定が見つかりません');
-                        this.updateFirebaseStatus('error');
-                        return Promise.reject(new Error('Firebase config missing'));
+                        console.log('⚠️ Firebase設定がまだ完了していません');
+                        this.updateFirebaseStatus('pending');
+                        // Google認証ボタンは有効なままにして設定を促す
+                        this.enableGoogleSigninBtnWithConfig();
+                        return Promise.resolve();
                     }
                     
                     console.log('🔥 Firebase初期化開始...', {
@@ -1497,6 +1570,25 @@
                 if (signinBtn) signinBtn.style.display = 'block';
                 if (signoutBtn) signoutBtn.style.display = 'none';
                 if (userInfo) userInfo.classList.add('hidden');
+                
+                // Firebase同期トグルを無効化
+                const syncToggle = document.getElementById('firebase-sync-toggle');
+                if (syncToggle) {
+                    syncToggle.disabled = true;
+                    syncToggle.checked = false;
+                    
+                    // 親要素にdisabledクラスを追加
+                    const toggleContainer = syncToggle.closest('.toggle-switch');
+                    if (toggleContainer) {
+                        toggleContainer.classList.add('disabled');
+                    }
+                    
+                    // Firebase設定パネルを非表示
+                    const configPanel = document.getElementById('firebase-config');
+                    if (configPanel) {
+                        configPanel.classList.add('hidden');
+                    }
+                }
             }
             
             updateGoogleAuthUI(user) {
@@ -1525,6 +1617,18 @@
                 if (syncToggle) {
                     syncToggle.disabled = false;
                     syncToggle.checked = true;
+                    
+                    // 親要素のdisabledクラスも削除
+                    const toggleContainer = syncToggle.closest('.toggle-switch');
+                    if (toggleContainer) {
+                        toggleContainer.classList.remove('disabled');
+                    }
+                    
+                    // Firebase設定パネルを表示
+                    const configPanel = document.getElementById('firebase-config');
+                    if (configPanel) {
+                        configPanel.classList.remove('hidden');
+                    }
                 }
             }
             
@@ -1543,6 +1647,23 @@
                 if (signinBtn) {
                     signinBtn.disabled = false;
                     signinBtn.innerHTML = '<i class="fab fa-google mr-2"></i>Googleでログイン';
+                }
+            }
+            
+            enableGoogleSigninBtnWithConfig() {
+                // Firebase設定が未完了でも認証ボタンを有効化（設定画面への誘導付き）
+                const signinBtn = document.getElementById('google-signin-btn');
+                if (signinBtn) {
+                    signinBtn.disabled = false;
+                    signinBtn.innerHTML = '<i class="fas fa-cog mr-2"></i>まずFirebase設定を完了';
+                    signinBtn.onclick = () => {
+                        // Firebase設定エリアにスクロール
+                        document.getElementById('firebase-config').scrollIntoView({ behavior: 'smooth' });
+                        // API Keyフィールドにフォーカス
+                        setTimeout(() => {
+                            document.getElementById('firebase-api-key').focus();
+                        }, 500);
+                    };
                 }
             }
             
@@ -2032,8 +2153,12 @@
                 
                 // Firebase初期化
                 this.initializeFirebase().then(() => {
+                    // Google認証ボタンを正常化
+                    this.enableGoogleSigninBtn();
                     alert('✅ Firebase設定を保存しました。\n「Googleでログイン」が利用可能になります。');
                 }).catch((error) => {
+                    // エラー時もボタンを有効に戻す（再設定できるよう）
+                    this.enableGoogleSigninBtnWithConfig();
                     alert('❌ Firebase初期化エラー: ' + error.message);
                 });
                 
