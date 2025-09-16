@@ -8,6 +8,9 @@
     <meta name="apple-mobile-web-app-title" content="TaskFlow">
     <meta name="theme-color" content="#3B82F6">
     
+    <!-- Permissions Policy対応 -->
+    <meta http-equiv="Permissions-Policy" content="browsing-topics=()">
+    
     <!-- PWA用のアイコン -->
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%233B82F6'/><path d='M40 90L70 120L140 50' stroke='white' stroke-width='8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <link rel="manifest" href="manifest.json">
@@ -1087,13 +1090,24 @@
             // 🔥 Firebase同期機能
             async initializeFirebase() {
                 try {
-                    if (!window.FirebaseSDK || !this.firebaseConfig) {
-                        console.error('❌ Firebase SDK または設定が見つかりません');
+                    // Firebase SDK 完全読み込み確認
+                    if (!window.FirebaseSDK) {
+                        console.error('❌ Firebase SDK が読み込まれていません');
+                        setTimeout(() => this.initializeFirebase(), 2000); // 2秒後に再試行
+                        return;
+                    }
+                    
+                    if (!this.firebaseConfig) {
+                        console.error('❌ Firebase設定が見つかりません');
                         this.updateFirebaseStatus('error');
                         return;
                     }
                     
-                    console.log('🔥 Firebase初期化開始...');
+                    console.log('🔥 Firebase初期化開始...', {
+                        sdkLoaded: !!window.FirebaseSDK,
+                        configExists: !!this.firebaseConfig,
+                        domain: window.location.hostname
+                    });
                     
                     const { initializeApp, getFirestore, getAuth, signInAnonymously, onAuthStateChanged } = window.FirebaseSDK;
                     
@@ -1495,9 +1509,46 @@
             
             async signInWithGoogle() {
                 try {
-                    // ドメイン承認問題の回避策：リダイレクト方式を使用
+                    // ブラウザ検出
+                    const isArcBrowser = navigator.userAgent.includes('Arc') || 
+                                       window.navigator.userAgent.includes('Arc') ||
+                                       /Arc\//.test(navigator.userAgent);
+                    
+                    if (isArcBrowser) {
+                        console.log('🌐 Arcブラウザを検出');
+                        
+                        // Arc用の警告メッセージ
+                        const useArc = confirm(
+                            '🌐 Arcブラウザを検出しました\n\n' +
+                            'Arcブラウザでは認証が不安定な場合があります。\n\n' +
+                            '✅ 続行する（Arcで試行）\n' +
+                            '❌ キャンセル（Chrome推奨）\n\n' +
+                            'Arcで問題が発生した場合は、Chrome/Safari/Edgeをご利用ください。'
+                        );
+                        
+                        if (!useArc) {
+                            alert('Chrome、Safari、Edgeなどのブラウザでのご利用をお勧めします。');
+                            return;
+                        }
+                    }
+                    
+                    // Firebase SDK の安全な読み込み確認
+                    if (!window.FirebaseSDK) {
+                        alert('❌ Firebase SDK が読み込まれていません。ページを再読み込みしてください。');
+                        return;
+                    }
+                    
                     const { GoogleAuthProvider, signInWithRedirect, getRedirectResult } = window.FirebaseSDK;
                     const provider = new GoogleAuthProvider();
+                    
+                    // Arcブラウザの場合はより安全なスコープ設定
+                    if (isArcBrowser) {
+                        provider.addScope('profile');
+                        provider.addScope('email');
+                        provider.setCustomParameters({
+                            prompt: 'select_account'
+                        });
+                    }
                     
                     // 既にリダイレクト結果があるかチェック
                     const result = await getRedirectResult(this.auth);
@@ -1510,7 +1561,14 @@
                         return;
                     }
                     
-                    // まずポップアップを試行
+                    // Arcブラウザの場合は直接リダイレクトを使用
+                    if (isArcBrowser) {
+                        console.log('🔄 Arcブラウザ用リダイレクト認証開始');
+                        await signInWithRedirect(this.auth, provider);
+                        return;
+                    }
+                    
+                    // 他のブラウザはポップアップを試行
                     try {
                         const { signInWithPopup } = window.FirebaseSDK;
                         const popupResult = await signInWithPopup(this.auth, provider);
@@ -1529,8 +1587,10 @@
                     
                     if (error.code === 'auth/unauthorized-domain') {
                         alert(`❌ ドメイン承認エラー\n\nFirebase Console で以下のドメインを承認してください：\n• ${window.location.hostname}\n• ${window.location.origin}`);
+                    } else if (error.code === 'auth/popup-blocked') {
+                        alert('❌ ポップアップがブロックされました\n\nブラウザのポップアップ設定を確認するか、Chrome/Safariをお試しください。');
                     } else {
-                        alert('❌ Google認証に失敗しました: ' + error.message);
+                        alert('❌ Google認証に失敗しました: ' + error.message + '\n\nArcブラウザをお使いの場合は、Chrome/Safari/Edgeをお試しください。');
                     }
                 }
             }
@@ -2992,7 +3052,7 @@
                 };
                 
                 if (!clientData.name.trim()) {
-                    alert('氏名は必須です');
+                    alert('クライアント名は必須です');
                     return;
                 }
                 
