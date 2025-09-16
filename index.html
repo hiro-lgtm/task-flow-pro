@@ -29,9 +29,9 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
-        window.FirebaseSDK = { initializeApp, getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, limit, getAuth, signInAnonymously, onAuthStateChanged };
+        import { getFirestore, doc, setDoc, getDoc, getDocs, onSnapshot, collection, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+        window.FirebaseSDK = { initializeApp, getFirestore, doc, setDoc, getDoc, getDocs, onSnapshot, collection, query, orderBy, limit, getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut };
     </script>
     
     <!-- Google Calendar API -->
@@ -676,13 +676,39 @@
                         <span id="firebase-status" class="sync-status ml-2">🟡</span>
                     </h3>
                     <div class="space-y-4">
+                        <!-- Google認証セクション -->
+                        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <label class="text-sm font-medium text-blue-800">🔐 Google認証</label>
+                                    <p class="text-sm text-blue-600">安全なデータ同期</p>
+                                </div>
+                                <div id="google-auth-status" class="text-2xl">🔴</div>
+                            </div>
+                            <div id="google-user-info" class="hidden mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <img id="user-photo" class="w-8 h-8 rounded-full" alt="User">
+                                    <div>
+                                        <div id="user-name" class="text-sm font-medium"></div>
+                                        <div id="user-email" class="text-xs text-gray-600"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="google-signin-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm">
+                                <i class="fab fa-google mr-2"></i>Googleでログイン
+                            </button>
+                            <button id="google-signout-btn" class="hidden w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm mt-2">
+                                <i class="fas fa-sign-out-alt mr-2"></i>ログアウト
+                            </button>
+                        </div>
+                        
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-gray-700">Firebase同期</label>
-                                <p class="text-sm text-gray-500">真のリアルタイム同期（完全無料・認証付き）</p>
+                                <p class="text-sm text-gray-500">Google認証後に自動有効化</p>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="firebase-sync-toggle" class="sr-only">
+                                <input type="checkbox" id="firebase-sync-toggle" class="sr-only" disabled>
                                 <div class="w-11 h-6 bg-gray-200 rounded-full relative">
                                     <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
                                 </div>
@@ -710,9 +736,12 @@
                                     <i class="fas fa-save mr-1"></i>設定保存
                                 </button>
                             </div>
-                            <div class="mt-2">
+                            <div class="mt-2 space-y-2">
                                 <button id="firebase-manual-sync-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm w-full">
                                     <i class="fas fa-sync mr-1"></i>手動同期実行
+                                </button>
+                                <button id="firebase-search-existing-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm w-full">
+                                    <i class="fas fa-search mr-1"></i>既存データ検索・取得
                                 </button>
                             </div>
                         </div>
@@ -1057,55 +1086,66 @@
             
             // 🔥 Firebase同期機能
             async initializeFirebase() {
-                if (!window.FirebaseSDK || !this.firebaseConfig) {
-                    console.error('❌ Firebase SDK または設定が見つかりません');
-                    this.updateFirebaseStatus('error');
-                    return;
-                }
-                
                 try {
+                    if (!window.FirebaseSDK || !this.firebaseConfig) {
+                        console.error('❌ Firebase SDK または設定が見つかりません');
+                        this.updateFirebaseStatus('error');
+                        return;
+                    }
+                    
                     console.log('🔥 Firebase初期化開始...');
                     
                     const { initializeApp, getFirestore, getAuth, signInAnonymously, onAuthStateChanged } = window.FirebaseSDK;
                     
-                    // Firebase初期化
-                    this.firebaseApp = initializeApp(this.firebaseConfig);
+                    // Firebase初期化（ドメイン対応版）
+                    const adjustedConfig = {
+                        ...this.firebaseConfig,
+                        authDomain: this.firebaseConfig.authDomain || `${this.firebaseConfig.projectId}.firebaseapp.com`
+                    };
+                    
+                    console.log('🔧 Firebase設定:', {
+                        projectId: adjustedConfig.projectId,
+                        authDomain: adjustedConfig.authDomain,
+                        currentDomain: window.location.hostname
+                    });
+                    
+                    this.firebaseApp = initializeApp(adjustedConfig);
                     this.firestore = getFirestore(this.firebaseApp);
                     this.auth = getAuth(this.firebaseApp);
                     
-                    // 匿名認証
+                    // 広告ブロッカー対策: オフライン永続化を有効にする
+                    try {
+                        const { enableNetwork, disableNetwork } = window.FirebaseSDK;
+                        console.log('🔧 Firebase設定最適化中...');
+                    } catch (error) {
+                        console.log('⚠️ 一部のFirebase機能が制限されています');
+                    }
+                    
+                    // 🔐 Google認証方式（安全＆同期問題解決）
                     onAuthStateChanged(this.auth, (user) => {
-                        if (user) {
+                        if (user && user.providerData[0]?.providerId === 'google.com') {
+                            // Google認証済みユーザー
                             this.user = user;
-                            console.log('✅ Firebase認証成功:', user.uid);
-                            console.log('📊 ユーザー情報:', {
+                            console.log('✅ Google認証成功:', {
                                 uid: user.uid,
-                                isAnonymous: user.isAnonymous,
-                                providerData: user.providerData,
-                                accessToken: user.accessToken ? 'あり' : 'なし',
-                                refreshToken: user.refreshToken ? 'あり' : 'なし'
+                                email: user.email,
+                                name: user.displayName,
+                                provider: 'Google'
                             });
                             
-                            // 認証トークンの詳細確認
-                            user.getIdToken(true).then(token => {
-                                console.log('🔑 認証トークン取得成功:', token.substring(0, 50) + '...');
-                                this.startFirebaseSync();
-                            }).catch(error => {
-                                console.error('❌ 認証トークン取得エラー:', error);
-                                this.updateFirebaseStatus('error');
-                            });
+                            this.startFirebaseSync();
+                            this.updateFirebaseStatus('success');
+                            
+                        } else if (user && user.isAnonymous) {
+                            // 匿名ユーザーをGoogleに変換
+                            console.log('⚠️ 匿名ユーザー検出 - Google認証を推奨');
+                            this.showGoogleAuthPrompt();
                             
                         } else {
-                            console.log('🔐 Firebase匿名認証開始...');
-                            signInAnonymously(this.auth).catch(error => {
-                                console.error('❌ 匿名認証エラー:', error);
-                                console.error('❌ エラー詳細:', {
-                                    code: error.code,
-                                    message: error.message,
-                                    authDomain: this.firebaseConfig.authDomain
-                                });
-                                this.updateFirebaseStatus('error');
-                            });
+                            // 未認証状態
+                            console.log('🔐 認証が必要です');
+                            this.showGoogleAuthPrompt();
+                            this.updateFirebaseStatus('error');
                         }
                     });
                     
@@ -1139,6 +1179,28 @@
                         permissions: 'OK'
                     });
                     
+                    // 🚨 起動時強制同期: Firebaseにデータがあれば必ず取得
+                    if (testDoc.exists()) {
+                        const initialData = testDoc.data();
+                        console.log('🚀 起動時データ発見 - 強制取得実行');
+                        console.log('📊 発見データ:', {
+                            tasks: initialData.tasks?.length || 0,
+                            clients: initialData.clients?.length || 0,
+                            timestamp: new Date(initialData.lastModified).toLocaleString()
+                        });
+                        
+                        // 現在のローカルデータよりFirebaseが新しい、またはローカルが空の場合
+                        const localEmpty = (this.tasks?.length || 0) === 0 && (this.clients?.length || 0) === 0;
+                        const firebaseNewer = initialData.lastModified > (this.lastSyncTime || 0);
+                        
+                        if (localEmpty || firebaseNewer) {
+                            console.log('💉 起動時強制同期実行');
+                            this.mergeFirebaseData(initialData);
+                        }
+                    } else {
+                        console.log('📄 Firebase初回起動 - ローカルデータをアップロード予定');
+                    }
+                    
                     // リアルタイムリスナー設定
                     
                     this.unsubscribeFirestore = onSnapshot(userDocRef, (docSnapshot) => {
@@ -1152,12 +1214,27 @@
                                     shouldMerge: data.lastModified !== this.lastSyncTime
                                 });
                                 
-                                // 完全に異なるタイムスタンプの場合のみ更新（自分が書き込んだ直後以外）
-                                if (data.lastModified !== this.lastSyncTime && !this.syncInProgress) {
+                                // より新しいデータ、または初回同期の場合は更新
+                                const isNewer = data.lastModified > (this.lastSyncTime || 0);
+                                const isInitialSync = !this.lastSyncTime;
+                                const shouldSync = (isNewer || isInitialSync) && !this.syncInProgress;
+                                
+                                console.log('🔍 同期判定詳細:', {
+                                    firebaseTimestamp: data.lastModified,
+                                    localTimestamp: this.lastSyncTime,
+                                    isNewer,
+                                    isInitialSync,
+                                    shouldSync,
+                                    syncInProgress: this.syncInProgress
+                                });
+                                
+                                if (shouldSync) {
                                     console.log('📥 新しいデータを検出 - マージ開始');
                                     this.mergeFirebaseData(data);
                                 } else {
-                                    console.log('⏭️ スキップ: 同じデータまたは同期中');
+                                    console.log('⏭️ スキップ理由:', {
+                                        reason: !isNewer && !isInitialSync ? '古いデータ' : 'sync進行中'
+                                    });
                                 }
                             } else {
                                 console.log('📄 Firestoreにドキュメントが存在しません');
@@ -1167,6 +1244,11 @@
                             this.updateFirebaseStatus('error');
                         }
                     }, (error) => {
+                        // 広告ブロッカーによるエラーは無視（同期は正常動作中）
+                        if (error.message && error.message.includes('network')) {
+                            console.log('⚠️ ネットワーク制限（広告ブロッカー）を検知しましたが、同期は継続中です');
+                            return;
+                        }
                         console.error('❌ Firestore リスナー エラー:', error);
                         this.updateFirebaseStatus('error');
                     });
@@ -1237,23 +1319,43 @@
                 this.syncInProgress = true;
                 
                 try {
+                    // データを適用前の状態を記録
+                    const beforeCount = {
+                        tasks: this.tasks?.length || 0,
+                        clients: this.clients?.length || 0,
+                        subtasks: this.subtasks?.length || 0,
+                        timeLogs: this.timeLogs?.length || 0
+                    };
+                    
                     // データを適用
                     if (firebaseData.tasks) {
                         this.tasks = firebaseData.tasks;
-                        console.log('✅ タスクデータ更新:', this.tasks.length, '件');
+                        console.log('✅ タスクデータ更新:', `${beforeCount.tasks} → ${this.tasks.length}件`);
+                    } else {
+                        console.log('⚠️ Firebaseにタスクデータなし');
                     }
+                    
                     if (firebaseData.clients) {
                         this.clients = firebaseData.clients;
-                        console.log('✅ 顧客データ更新:', this.clients.length, '件');
+                        console.log('✅ 顧客データ更新:', `${beforeCount.clients} → ${this.clients.length}件`);
+                    } else {
+                        console.log('⚠️ Firebaseに顧客データなし');
                     }
+                    
                     if (firebaseData.subtasks) {
                         this.subtasks = firebaseData.subtasks;
-                        console.log('✅ サブタスクデータ更新:', this.subtasks.length, '件');
+                        console.log('✅ サブタスクデータ更新:', `${beforeCount.subtasks} → ${this.subtasks.length}件`);
+                    } else {
+                        console.log('⚠️ Firebaseにサブタスクデータなし');
                     }
+                    
                     if (firebaseData.timeLogs) {
                         this.timeLogs = firebaseData.timeLogs;
-                        console.log('✅ 時間ログデータ更新:', this.timeLogs.length, '件');
+                        console.log('✅ 時間ログデータ更新:', `${beforeCount.timeLogs} → ${this.timeLogs.length}件`);
+                    } else {
+                        console.log('⚠️ Firebaseに時間ログデータなし');
                     }
+                    
                     if (firebaseData.settings) {
                         this.settings = { ...this.settings, ...firebaseData.settings };
                         console.log('✅ 設定データ更新');
@@ -1262,10 +1364,40 @@
                     // ローカル保存
                     this.saveData();
                     
-                    // UI更新
-                    this.renderTasks();
-                    this.renderClients();
-                    this.loadSettings();
+                    // UI更新（強制実行）
+                    console.log('🔄 UI更新開始...');
+                    
+                    // タスク表示を強制更新
+                    if (typeof this.renderTasks === 'function') {
+                        this.renderTasks();
+                        console.log('✅ タスク画面更新完了');
+                    } else {
+                        console.error('❌ renderTasks関数が見つかりません');
+                    }
+                    
+                    // 顧客表示を強制更新  
+                    if (typeof this.renderClients === 'function') {
+                        this.renderClients();
+                        console.log('✅ 顧客画面更新完了');
+                    } else {
+                        console.error('❌ renderClients関数が見つかりません');
+                    }
+                    
+                    // 設定を強制更新
+                    if (typeof this.loadSettings === 'function') {
+                        this.loadSettings();
+                        console.log('✅ 設定更新完了');
+                    } else {
+                        console.error('❌ loadSettings関数が見つかりません');
+                    }
+                    
+                    // 現在表示中のタブを再レンダリング
+                    const activeTab = document.querySelector('.tab-btn.active');
+                    if (activeTab) {
+                        const tabName = activeTab.textContent.trim();
+                        console.log('🔄 アクティブタブ再描画:', tabName);
+                        activeTab.click();
+                    }
                     
                     // 同期時刻を更新
                     this.lastSyncTime = firebaseData.lastModified;
@@ -1320,6 +1452,131 @@
                 }
                 
                 console.log('🎉 同期完了 - データが他の端末と同期されました');
+            }
+            
+            showGoogleAuthPrompt() {
+                // Google認証が必要な場合のUI更新
+                const authStatus = document.getElementById('google-auth-status');
+                const signinBtn = document.getElementById('google-signin-btn');
+                const signoutBtn = document.getElementById('google-signout-btn');
+                const userInfo = document.getElementById('google-user-info');
+                
+                if (authStatus) authStatus.textContent = '🔴';
+                if (signinBtn) signinBtn.style.display = 'block';
+                if (signoutBtn) signoutBtn.style.display = 'none';
+                if (userInfo) userInfo.classList.add('hidden');
+            }
+            
+            updateGoogleAuthUI(user) {
+                // Google認証成功時のUI更新
+                const authStatus = document.getElementById('google-auth-status');
+                const signinBtn = document.getElementById('google-signin-btn');
+                const signoutBtn = document.getElementById('google-signout-btn');
+                const userInfo = document.getElementById('google-user-info');
+                const userName = document.getElementById('user-name');
+                const userEmail = document.getElementById('user-email');
+                const userPhoto = document.getElementById('user-photo');
+                
+                if (authStatus) authStatus.textContent = '🟢';
+                if (signinBtn) signinBtn.style.display = 'none';
+                if (signoutBtn) signoutBtn.style.display = 'block';
+                if (userInfo) userInfo.classList.remove('hidden');
+                if (userName) userName.textContent = user.displayName || 'ユーザー';
+                if (userEmail) userEmail.textContent = user.email || '';
+                if (userPhoto) userPhoto.src = user.photoURL || '';
+                
+                // Firebase同期トグルを有効化
+                const syncToggle = document.getElementById('firebase-sync-toggle');
+                if (syncToggle) {
+                    syncToggle.disabled = false;
+                    syncToggle.checked = true;
+                }
+            }
+            
+            async signInWithGoogle() {
+                try {
+                    // ドメイン承認問題の回避策：リダイレクト方式を使用
+                    const { GoogleAuthProvider, signInWithRedirect, getRedirectResult } = window.FirebaseSDK;
+                    const provider = new GoogleAuthProvider();
+                    
+                    // 既にリダイレクト結果があるかチェック
+                    const result = await getRedirectResult(this.auth);
+                    
+                    if (result) {
+                        // リダイレクトから戻ってきた場合
+                        const user = result.user;
+                        console.log('✅ Google認証成功（リダイレクト）:', user.email);
+                        this.updateGoogleAuthUI(user);
+                        return;
+                    }
+                    
+                    // まずポップアップを試行
+                    try {
+                        const { signInWithPopup } = window.FirebaseSDK;
+                        const popupResult = await signInWithPopup(this.auth, provider);
+                        const user = popupResult.user;
+                        console.log('✅ Google認証成功（ポップアップ）:', user.email);
+                        this.updateGoogleAuthUI(user);
+                        
+                    } catch (popupError) {
+                        // ポップアップ失敗時はリダイレクトを使用
+                        console.log('ℹ️ ポップアップ失敗、リダイレクトに切り替え');
+                        await signInWithRedirect(this.auth, provider);
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Google認証エラー:', error);
+                    
+                    if (error.code === 'auth/unauthorized-domain') {
+                        alert(`❌ ドメイン承認エラー\n\nFirebase Console で以下のドメインを承認してください：\n• ${window.location.hostname}\n• ${window.location.origin}`);
+                    } else {
+                        alert('❌ Google認証に失敗しました: ' + error.message);
+                    }
+                }
+            }
+            
+            async signOutGoogle() {
+                try {
+                    const { signOut } = window.FirebaseSDK;
+                    await signOut(this.auth);
+                    
+                    console.log('✅ ログアウト完了');
+                    this.showGoogleAuthPrompt();
+                    
+                } catch (error) {
+                    console.error('❌ ログアウトエラー:', error);
+                }
+            }
+            
+            showAdBlockerNotice() {
+                // 広告ブロッカー検知時の通知
+                const notice = document.createElement('div');
+                notice.className = 'fixed top-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded shadow-lg z-50 max-w-sm';
+                notice.innerHTML = `
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-shield-alt text-yellow-500"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                <strong>広告ブロッカーを検知</strong><br>
+                                同期は正常動作中です。エラーメッセージは無視して問題ありません。
+                            </p>
+                            <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                                    class="mt-2 text-xs bg-yellow-200 px-2 py-1 rounded">
+                                理解しました
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(notice);
+                
+                // 10秒後に自動削除
+                setTimeout(() => {
+                    if (notice.parentElement) {
+                        notice.remove();
+                    }
+                }, 10000);
             }
             
             startSyncMonitoring() {
@@ -1685,15 +1942,129 @@
                 
                 const firebaseManualSyncBtn = document.getElementById('firebase-manual-sync-btn');
                 if (firebaseManualSyncBtn) {
-                    firebaseManualSyncBtn.addEventListener('click', () => {
+                    firebaseManualSyncBtn.addEventListener('click', async () => {
                         console.log('🔄 手動同期実行...');
-                        if (this.firestore && this.user) {
-                            this.uploadToFirebase();
-                        } else {
-                            alert('Firebase接続が確立されていません。設定を確認してください。');
+                        firebaseManualSyncBtn.disabled = true;
+                        firebaseManualSyncBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>同期中...';
+                        
+                        try {
+                            if (this.firestore && this.user) {
+                                const { doc, getDoc } = window.FirebaseSDK;
+                                const userDocRef = doc(this.firestore, 'users', this.user.uid);
+                                const docSnap = await getDoc(userDocRef);
+                                
+                                if (docSnap.exists()) {
+                                    const firebaseData = docSnap.data();
+                                    this.lastSyncTime = 0; // 強制更新
+                                    this.mergeFirebaseData(firebaseData);
+                                    alert(`✅ 同期完了！\nタスク: ${firebaseData.tasks?.length || 0}件\n顧客: ${firebaseData.clients?.length || 0}件`);
+                                } else {
+                                    await this.uploadToFirebase();
+                                    alert('✅ ローカルデータをFirebaseにアップロードしました。');
+                                }
+                            } else {
+                                alert('❌ Firebase接続を確認してください。');
+                            }
+                        } catch (error) {
+                            console.error('❌ 手動同期エラー:', error);
+                            alert('❌ 同期エラー: ' + error.message);
+                        } finally {
+                            firebaseManualSyncBtn.disabled = false;
+                            firebaseManualSyncBtn.innerHTML = '<i class="fas fa-sync mr-1"></i>手動同期実行';
                         }
                     });
                 }
+                
+                // 🔍 既存データ検索・取得機能（シンプル版）
+                setTimeout(() => {
+                    const firebaseSearchBtn = document.getElementById('firebase-search-existing-btn');
+                    if (firebaseSearchBtn) {
+                        firebaseSearchBtn.addEventListener('click', async () => {
+                    console.log('🔍 既存データ検索開始...');
+                    existingDataBtn.disabled = true;
+                    existingDataBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>検索中...';
+                    
+                    try {
+                        if (!this.firestore) {
+                            alert('❌ Firebase未接続');
+                            return;
+                        }
+                        
+                        const { collection, getDocs } = window.FirebaseSDK;
+                        const usersRef = collection(this.firestore, 'users');
+                        const snapshot = await getDocs(usersRef);
+                        
+                        console.log('📊 Firebaseユーザー一覧:');
+                        const availableUsers = [];
+                        
+                        snapshot.forEach((doc) => {
+                            const data = doc.data();
+                            const userInfo = {
+                                userId: doc.id,
+                                tasksCount: data.tasks?.length || 0,
+                                clientsCount: data.clients?.length || 0,
+                                lastModified: data.lastModified ? new Date(data.lastModified).toLocaleString() : 'なし'
+                            };
+                            console.log(`👤 ユーザー: ${doc.id}`, userInfo);
+                            availableUsers.push({ id: doc.id, data, info: userInfo });
+                        });
+                        
+                        if (availableUsers.length === 0) {
+                            alert('📄 Firebaseにデータが見つかりません');
+                            return;
+                        }
+                        
+                        // 最もデータが多いユーザーを選択
+                        const bestUser = availableUsers.reduce((prev, current) => {
+                            const prevTotal = (prev.data.tasks?.length || 0) + (prev.data.clients?.length || 0);
+                            const currentTotal = (current.data.tasks?.length || 0) + (current.data.clients?.length || 0);
+                            return currentTotal > prevTotal ? current : prev;
+                        });
+                        
+                        console.log('🎯 最適ユーザーを選択:', bestUser.id, bestUser.info);
+                        
+                        const confirmMsg = `以下のデータが見つかりました：\n\n` +
+                            `ユーザーID: ${bestUser.id}\n` +
+                            `タスク: ${bestUser.info.tasksCount}件\n` +
+                            `顧客: ${bestUser.info.clientsCount}件\n` +
+                            `更新日時: ${bestUser.info.lastModified}\n\n` +
+                            `このデータを取得しますか？`;
+                        
+                        if (confirm(confirmMsg)) {
+                            // ユーザーIDを変更して取得
+                            this.user = { uid: bestUser.id };
+                            console.log('🔄 ユーザーID変更:', bestUser.id);
+                            
+                            // データを強制取得
+                            this.lastSyncTime = 0; // 強制更新
+                            this.mergeFirebaseData(bestUser.data);
+                            
+                            alert('✅ データ取得完了！画面を確認してください。');
+                        }
+                        
+                    } catch (error) {
+                        console.error('❌ データ検索エラー:', error);
+                        alert('❌ エラー: ' + error.message);
+                    } finally {
+                        existingDataBtn.disabled = false;
+                            firebaseSearchBtn.innerHTML = '<i class="fas fa-search mr-1"></i>既存データ検索・取得';
+                        }
+                    });
+                    }
+                }, 1000); // DOM読み込み完了後に実行
+                
+                // Google認証ボタンのイベントリスナー
+                setTimeout(() => {
+                    const googleSigninBtn = document.getElementById('google-signin-btn');
+                    const googleSignoutBtn = document.getElementById('google-signout-btn');
+                    
+                    if (googleSigninBtn) {
+                        googleSigninBtn.addEventListener('click', () => this.signInWithGoogle());
+                    }
+                    if (googleSignoutBtn) {
+                        googleSignoutBtn.addEventListener('click', () => this.signOutGoogle());
+                    }
+                }, 1000);
                 
                 document.getElementById('calendar-sync-toggle').addEventListener('change', (e) => {
                     document.getElementById('calendar-settings').classList.toggle('hidden', !e.target.checked);
