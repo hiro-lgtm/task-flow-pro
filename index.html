@@ -45,8 +45,21 @@
         body {
             font-family: 'Inter', sans-serif;
             -webkit-touch-callout: none;
-            -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ボタンとクリック可能な要素のみ選択を無効化 */
+        button, .tab-button, .custom-checkbox, .ios-tap {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+
+        /* テキスト要素は選択可能に */
+        p, span, h1, h2, h3, h4, h5, h6, .selectable {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            user-select: text;
         }
         
         /* iOS風のボタンエフェクト */
@@ -148,14 +161,8 @@
         .toggle-switch {
             position: relative;
             display: inline-block;
-            width: 44px;
-            height: 24px;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
+            width: 40px;
+            height: 20px;
         }
 
         .toggle-slider {
@@ -165,10 +172,10 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #ccc;
-            -webkit-transition: .4s;
-            transition: .4s;
-            border-radius: 24px;
+            background-color: #d1d5db;
+            -webkit-transition: .3s;
+            transition: .3s;
+            border-radius: 20px;
         }
 
         .toggle-slider:before {
@@ -176,41 +183,36 @@
             content: "";
             height: 16px;
             width: 16px;
-            left: 4px;
-            bottom: 4px;
+            left: 2px;
+            bottom: 2px;
             background-color: white;
-            -webkit-transition: .4s;
-            transition: .4s;
+            -webkit-transition: .3s;
+            transition: .3s;
             border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
 
-        .toggle-switch input:checked + .toggle-slider {
+        input:checked + .toggle-switch .toggle-slider {
             background-color: #3b82f6;
         }
 
-        .toggle-switch input:focus + .toggle-slider {
-            box-shadow: 0 0 1px #3b82f6;
+        input:focus + .toggle-switch .toggle-slider {
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
 
-        .toggle-switch input:checked + .toggle-slider:before {
+        input:checked + .toggle-switch .toggle-slider:before {
             -webkit-transform: translateX(20px);
             -ms-transform: translateX(20px);
             transform: translateX(20px);
         }
 
-        /* Disabled state */
-        .toggle-switch input:disabled + .toggle-slider {
-            background-color: #e5e7eb;
-            cursor: not-allowed;
-            opacity: 0.6;
+        /* ホバーエフェクト */
+        .toggle-switch:hover .toggle-slider {
+            background-color: #9ca3af;
         }
 
-        .toggle-switch input:disabled + .toggle-slider:before {
-            background-color: #f3f4f6;
-        }
-
-        .toggle-switch.disabled {
-            pointer-events: none;
+        input:checked + .toggle-switch:hover .toggle-slider {
+            background-color: #2563eb;
         }
         
         /* ガントチャートスタイル */
@@ -222,6 +224,168 @@
             height: 600px;
             overflow: hidden;
             z-index: 1;
+        }
+
+        .gantt-wrapper {
+            display: flex;
+            height: 100%;
+        }
+
+        .gantt-fixed-column {
+            width: 300px;
+            border-right: 2px solid #d1d5db;
+            background: white;
+            flex-shrink: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .gantt-fixed-content {
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .gantt-scrollable-wrapper {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            border-left: 0;
+        }
+
+        .gantt-header-row {
+            height: 32px !important;
+            min-height: 32px !important;
+            max-height: 32px !important;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f9fafb !important;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50 !important;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .gantt-scrollable-area {
+            height: 100%;
+            overflow-x: auto;
+            overflow-y: auto;
+            padding-top: 32px;
+        }
+
+        .gantt-day-column {
+            min-width: 40px;
+            width: 40px;
+            max-width: 40px;
+            flex-shrink: 0;
+            flex-grow: 0;
+            padding: 0;
+            border-right: 1px solid #e5e7eb;
+            text-align: center;
+            background: white;
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        
+        .gantt-header-row .gantt-day-column {
+            height: 32px;
+            min-height: 32px;
+            background: #f9fafb;
+        }
+        
+        .gantt-header-cell {
+            height: 32px !important;
+            min-height: 32px !important;
+            max-height: 32px !important;
+            background: #f9fafb !important;
+            border-right: 1px solid #e5e7eb !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            min-width: 40px !important;
+            width: 40px !important;
+            max-width: 40px !important;
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        }
+        
+        .gantt-header-cell > div {
+            display: block !important;
+            text-align: center !important;
+        }
+        
+        .gantt-scrollable-area .gantt-day-column {
+            min-height: 40px;
+        }
+
+        .gantt-weekend {
+            background-color: #fee2e2 !important;
+        }
+
+        .gantt-today {
+            background-color: #dbeafe !important;
+            border-left: 3px solid #3b82f6 !important;
+        }
+
+        .gantt-weekend.gantt-today {
+            background-color: #fde68a !important;
+            border-left: 3px solid #f59e0b !important;
+        }
+        
+        .gantt-header-cell.gantt-weekend {
+            background-color: #fee2e2 !important;
+        }
+        
+        .gantt-header-cell.gantt-today {
+            background-color: #dbeafe !important;
+            border-left: 3px solid #3b82f6 !important;
+            font-weight: 600 !important;
+        }
+        
+        .gantt-header-cell.gantt-weekend.gantt-today {
+            background-color: #fde68a !important;
+            border-left: 3px solid #f59e0b !important;
+        }
+
+        .gantt-row {
+            min-height: 40px;
+            height: 40px;
+            max-height: 40px;
+            display: flex;
+            align-items: stretch;
+            border-bottom: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+        
+        .gantt-task-row {
+            min-height: 40px;
+            height: 40px;
+            max-height: 40px;
+            padding: 4px 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow: hidden;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .gantt-subtask {
+            min-height: 40px;
+            height: 40px;
+            max-height: 40px;
+            overflow: hidden;
+            display: flex;
+            align-items: stretch;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         
         /* セレクトボックスのドロップダウンが正常に表示されるようにする */
@@ -256,6 +420,7 @@
         .gantt-task-row {
             cursor: pointer;
             transition: background-color 0.2s ease;
+            flex-shrink: 0 !important;
         }
         
         .gantt-task-row:hover {
@@ -268,19 +433,71 @@
             color: #6b7280;
             border-left: 2px solid #e5e7eb;
             margin-left: 10px;
+            flex-shrink: 0 !important;
         }
         
         .gantt-subtask-bar {
-            height: 16px;
+            height: 14px;
             background: #9CA3AF;
             border-radius: 2px;
-            font-size: 10px;
-            padding: 0 4px;
-            margin: 1px 0;
+            font-size: 8px;
+            color: white;
+            padding: 0 2px;
+            margin: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: calc(100% - 2px);
+            box-sizing: border-box;
         }
         
         .gantt-subtask-bar.completed {
             background: #6EE7B7;
+        }
+        
+        .gantt-task-bar {
+            height: 18px;
+            background: #3b82f6;
+            border-radius: 2px;
+            font-size: 9px;
+            color: white;
+            padding: 0 2px;
+            margin: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: calc(100% - 2px);
+            box-sizing: border-box;
+        }
+        
+        .gantt-task-bar:hover {
+            background: #2563eb;
+        }
+        
+        .gantt-task-bar.high-priority {
+            background: #ef4444;
+        }
+        
+        .gantt-task-bar.high-priority:hover {
+            background: #dc2626;
+        }
+        
+        .gantt-task-bar.completed {
+            background: #10b981;
+            opacity: 0.8;
+        }
+        
+        .gantt-task-bar.completed:hover {
+            background: #059669;
         }
         
         .gantt-wrapper {
@@ -294,7 +511,8 @@
             border-right: 2px solid #d1d5db;
             z-index: 20;
             box-shadow: 2px 0 4px rgba(0,0,0,0.1);
-            overflow-y: auto;
+            overflow: hidden;
+            position: relative;
             flex-shrink: 0;
         }
         
@@ -595,7 +813,7 @@
                                     <i class="fas fa-chevron-left"></i> 前月
                                 </button>
                                 <button id="gantt-today-month" class="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-md text-sm">
-                                    <i class="fas fa-calendar-day mr-1"></i>今月
+                                    <i class="fas fa-calendar-day mr-1"></i>今日へ
                                 </button>
                                 <span id="gantt-current-month" class="text-lg font-medium text-gray-700 mx-2"></span>
                                 <button id="gantt-next-month" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm">
@@ -2470,6 +2688,11 @@
                 document.getElementById('import-data-btn').addEventListener('click', () => document.getElementById('import-file-input').click());
                 document.getElementById('import-file-input').addEventListener('change', (e) => this.importData(e));
                 document.getElementById('clear-data-btn').addEventListener('click', () => this.clearAllData());
+                
+                // タスクページのフィルター初期化
+                setTimeout(() => {
+                    this.initializeTaskFilters();
+                }, 500);
             }
             
             switchTab(tabName) {
@@ -2491,6 +2714,10 @@
                 
                 // タブ固有の初期化処理
                 switch (tabName) {
+                    case 'tasks':
+                        this.renderTasks();
+                        setTimeout(() => this.initializeTaskFilters(), 100);
+                        break;
                     case 'gantt':
                         this.renderGanttChart();
                         this.bindGanttEvents(); // ガントチャートタブでイベント再設定
@@ -2509,6 +2736,17 @@
             
             generateId() {
                 return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            }
+
+            linkifyText(text) {
+                // URL検出のための正規表現
+                const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`[\]]*)/gi;
+                
+                return text.replace(urlRegex, (url) => {
+                    // URLを安全にエスケープ
+                    const safeUrl = url.replace(/"/g, '&quot;');
+                    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline break-all" onclick="event.stopPropagation()">${url}</a>`;
+                });
             }
             
             saveData() {
@@ -2849,6 +3087,53 @@
                 });
             }
             
+            initializeTaskFilters() {
+                // ステータスフィルターに新しいオプションを追加
+                this.updateStatusFilterOptions();
+                
+                // 既存のイベントリスナーを設定
+                const searchInput = document.getElementById('search-input');
+                const filterStatus = document.getElementById('filter-status');
+                const filterPriority = document.getElementById('filter-priority');
+                
+                if (searchInput) {
+                    searchInput.addEventListener('input', () => this.renderTasks());
+                }
+                if (filterStatus) {
+                    filterStatus.addEventListener('change', () => {
+                        console.log('🔍 ステータスフィルター変更:', filterStatus.value);
+                        this.renderTasks();
+                    });
+                }
+                if (filterPriority) {
+                    filterPriority.addEventListener('change', () => this.renderTasks());
+                }
+                
+                console.log('✅ タスクフィルターを初期化しました');
+            }
+            
+            updateStatusFilterOptions() {
+                const filterStatus = document.getElementById('filter-status');
+                if (!filterStatus) return;
+                
+                // 既存のオプションを保存
+                const currentValue = filterStatus.value;
+                
+                // 新しいオプションを設定
+                filterStatus.innerHTML = `
+                    <option value="">全ステータス</option>
+                    <option value="active">未着手と進行中のみ</option>
+                    <option value="pending">未着手</option>
+                    <option value="in_progress">進行中</option>
+                    <option value="completed">完了</option>
+                `;
+                
+                // 前の選択値を復元
+                filterStatus.value = currentValue;
+                
+                console.log('🔄 ステータスフィルターのオプションを更新しました');
+            }
+            
             renderTasks() {
                 const container = document.getElementById('tasks-container');
                 const searchTerm = document.getElementById('search-input').value.toLowerCase();
@@ -2858,7 +3143,19 @@
                 let filteredTasks = this.tasks.filter(task => {
                     const matchSearch = task.title.toLowerCase().includes(searchTerm) || 
                                       (task.description && task.description.toLowerCase().includes(searchTerm));
-                    const matchStatus = !statusFilter || task.status === statusFilter;
+                    
+                    // ステータスフィルターの処理を拡張
+                    let matchStatus = true;
+                    if (statusFilter) {
+                        if (statusFilter === 'active') {
+                            // "未着手と進行中のみ"の場合
+                            matchStatus = task.status === 'pending' || task.status === 'in_progress';
+                        } else {
+                            // 通常の個別ステータス
+                            matchStatus = task.status === statusFilter;
+                        }
+                    }
+                    
                     const matchPriority = !priorityFilter || task.priority === priorityFilter;
                     
                     return matchSearch && matchStatus && matchPriority;
@@ -2894,7 +3191,7 @@
             
             createTaskCard(task) {
                 const card = document.createElement('div');
-                card.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow';
+                card.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-shadow';
                 
                 const client = task.client_id ? this.clients.find(c => c.id === task.client_id) : null;
                 const taskSubtasks = this.subtasks.filter(st => st.parent_task_id === task.id);
@@ -2954,8 +3251,8 @@
                             <button class="custom-checkbox mt-1 ${task.status === 'completed' ? 'checked' : ''}" 
                                     onclick="app.toggleTaskStatus('${task.id}')"></button>
                             <div class="flex-1 min-w-0">
-                                <h3 class="text-lg font-semibold text-gray-900 ${task.status === 'completed' ? 'line-through' : ''}">${task.title}</h3>
-                                ${task.description ? `<p class="text-gray-600 text-sm mt-1">${task.description}</p>` : ''}
+                                <h3 class="text-lg font-semibold text-gray-900 truncate ${task.status === 'completed' ? 'line-through' : ''}">${task.title}</h3>
+                                ${task.description ? `<p class="text-gray-600 text-sm mt-1 break-words line-clamp-2 overflow-hidden">${this.linkifyText(task.description)}</p>` : ''}
                                 ${client ? `<p class="text-blue-600 text-sm mt-1"><i class="fas fa-user mr-1"></i>${client.name}${client.company ? ` (${client.company})` : ''}</p>` : ''}
                                 
                                 <div class="flex flex-wrap items-center gap-2 mt-3">
@@ -3023,6 +3320,28 @@
             goToCurrentMonth() {
                 this.ganttCurrentDate = new Date();
                 this.renderGanttChart();
+                
+                // 今日の日付にスクロールする
+                setTimeout(() => this.scrollToToday(), 300);
+            }
+
+            scrollToToday() {
+                const today = new Date();
+                const currentMonth = this.ganttCurrentDate.getMonth();
+                const currentYear = this.ganttCurrentDate.getFullYear();
+                
+                // 今月が表示されているかチェック
+                if (today.getMonth() === currentMonth && today.getFullYear() === currentYear) {
+                    const todayColumn = today.getDate();
+                    const columnWidth = 40; // 日付列の幅
+                    const scrollPosition = (todayColumn - 1) * columnWidth - 150; // 中央に表示するためのオフセット
+                    
+                    const timeline = document.getElementById('gantt-timeline');
+                    if (timeline) {
+                        timeline.scrollLeft = Math.max(0, scrollPosition);
+                        console.log(`📅 今日(${todayColumn}日)の位置にスクロールしました`);
+                    }
+                }
             }
             
             bindGanttEvents() {
@@ -3090,7 +3409,7 @@
                         if (statusFilter) {
                             statusFilter.removeEventListener('change', this.handleStatusFilter);
                             this.handleStatusFilter = () => {
-                                console.log('ステータスフィルター変更:', statusFilter.value);
+                                console.log('🔍 ガントステータスフィルター変更:', statusFilter.value);
                                 this.renderGanttChart();
                             };
                             statusFilter.addEventListener('change', this.handleStatusFilter);
@@ -3138,6 +3457,31 @@
                 }
             }
             
+            updateGanttStatusFilter() {
+                const statusSelect = document.getElementById('gantt-filter-status');
+                if (!statusSelect) {
+                    console.warn('ガントステータスフィルター要素が見つかりません');
+                    return;
+                }
+                
+                // 現在の選択値を保持
+                const currentValue = statusSelect.value;
+                
+                // タスクページと同じオプションを設定
+                statusSelect.innerHTML = `
+                    <option value="">全ステータス</option>
+                    <option value="active">未着手と進行中のみ</option>
+                    <option value="pending">未着手</option>
+                    <option value="in_progress">進行中</option>
+                    <option value="completed">完了</option>
+                `;
+                
+                // 前の選択値を復元
+                statusSelect.value = currentValue;
+                
+                console.log('🔄 ガントステータスフィルターのオプションを更新しました');
+            }
+            
             updateAllClientFilters() {
                 // タスクモーダルの顧客選択を更新
                 this.populateClientSelect();
@@ -3159,7 +3503,18 @@
                     const matchSearch = task.title.toLowerCase().includes(searchTerm) || 
                                       (task.description && task.description.toLowerCase().includes(searchTerm));
                     const matchClient = !clientFilter || task.client_id === clientFilter;
-                    const matchStatus = !statusFilter || task.status === statusFilter;
+                    
+                    // ステータスフィルターの処理を拡張（タスクページと同じロジック）
+                    let matchStatus = true;
+                    if (statusFilter) {
+                        if (statusFilter === 'active') {
+                            // "未着手と進行中のみ"の場合
+                            matchStatus = task.status === 'pending' || task.status === 'in_progress';
+                        } else {
+                            // 通常の個別ステータス
+                            matchStatus = task.status === statusFilter;
+                        }
+                    }
                     
                     const matches = matchSearch && matchClient && matchStatus;
                     if (clientFilter && task.client_id === clientFilter) {
@@ -3179,8 +3534,9 @@
                 
                 console.log(`📈 ガントチャート描画開始: ${this.clients.length}件の顧客, ${this.tasks.length}件のタスク`);
                 
-                // 顧客フィルターを更新
+                // フィルターを更新
                 this.populateGanttClientFilter();
+                this.updateGanttStatusFilter();
                 
                 const year = this.ganttCurrentDate.getFullYear();
                 const month = this.ganttCurrentDate.getMonth();
@@ -3199,22 +3555,59 @@
                 let ganttHTML = `
                     <div class="gantt-wrapper">
                         <div class="gantt-fixed-column">
-                            <div class="gantt-header px-4 py-2">
+                            <div class="gantt-header-row px-4 py-2 flex items-center" style="height: 32px; min-height: 32px; max-height: 32px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; border-right: 2px solid #3b82f6; position: absolute; top: 0; left: 0; right: 0; z-index: 15;">
                                 <div class="text-sm font-semibold text-gray-700">タスク</div>
                             </div>
+                            <div class="gantt-fixed-content" id="gantt-task-list" style="padding-top: 32px; height: 100%; overflow-y: auto; overflow-x: hidden;">
                 `;
                 
+                // タスクが空の場合は最小高さを確保
+                if (filteredTasks.length === 0) {
+                    ganttHTML += `
+                        <div class="gantt-row px-4 py-8 text-center text-gray-500">
+                            <div class="text-sm">表示するタスクがありません</div>
+                        </div>
+                    `;
+                }
+                
                 // タスクごとの行を生成
-                filteredTasks.forEach(task => {
+                console.log(`🔍 左側タスクリスト生成開始: ${filteredTasks.length}件のタスク`);
+                filteredTasks.forEach((task, taskIndex) => {
                     const client = task.client_id ? this.clients.find(c => c.id === task.client_id) : null;
                     const taskSubtasks = showSubtasks ? this.subtasks.filter(st => st.parent_task_id === task.id) : [];
+                    console.log(`タスク${taskIndex + 1}: "${task.title}" - サブタスク${taskSubtasks.length}件`);
+                    
+                    // 期限までの日数計算
+                    const today = new Date();
+                    const deadline = new Date(task.deadline);
+                    const daysUntilDeadline = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+                    
+                    let deadlineClass = 'text-gray-500';
+                    let deadlineText = `${Math.abs(daysUntilDeadline)}日`;
+                    
+                    if (daysUntilDeadline < 0) {
+                        deadlineClass = 'text-red-600';
+                        deadlineText = `${Math.abs(daysUntilDeadline)}日遅れ`;
+                    } else if (daysUntilDeadline === 0) {
+                        deadlineClass = 'text-red-600';
+                        deadlineText = '今日';
+                    } else if (daysUntilDeadline <= 3) {
+                        deadlineClass = 'text-orange-600';
+                        deadlineText = `${daysUntilDeadline}日後`;
+                    } else {
+                        deadlineText = `${daysUntilDeadline}日後`;
+                    }
+                    
+                    const clientName = client ? (client.name + (client.company ? ` (${client.company})` : '')) : '';
                     
                     ganttHTML += `
-                        <div class="gantt-row gantt-task-row px-4 py-2 border-b border-gray-100" onclick="app.openTaskModal(app.tasks.find(t => t.id === '${task.id}'))">
-                            <div class="text-sm font-medium text-gray-900 truncate">${task.title}</div>
-                            <div class="text-xs text-gray-500 mt-1">
-                                ${task.deadline} | ${task.priority === 'high' ? '高' : task.priority === 'medium' ? '中' : '低'}
-                                ${client ? ` | ${client.name}` : ''}
+                        <div class="gantt-task-row" onclick="app.openTaskModal(app.tasks.find(t => t.id === '${task.id}'))">
+                            <div class="text-xs font-semibold text-gray-900 truncate" style="line-height: 1.2; margin-bottom: 1px;">${task.title}</div>
+                            <div class="flex items-center justify-between" style="line-height: 1.1;">
+                                <span class="${deadlineClass} font-medium" style="font-size: 10px;">
+                                    <i class="fas fa-calendar mr-1"></i>${deadlineText}
+                                </span>
+                                ${clientName ? `<span class="text-blue-600 truncate flex-shrink-0 max-w-28" style="font-size: 10px;"><i class="fas fa-user mr-1"></i>${clientName}</span>` : ''}
                             </div>
                         </div>
                     `;
@@ -3222,10 +3615,9 @@
                     // サブタスクを表示
                     taskSubtasks.forEach(subtask => {
                         ganttHTML += `
-                            <div class="gantt-row gantt-subtask px-4 py-1 border-b border-gray-50">
-                                <div class="text-xs text-gray-600 truncate">└ ${subtask.title}</div>
-                                <div class="text-xs text-gray-400">
-                                    ${subtask.deadline || '期限なし'} | ${subtask.completed ? '完了' : '未完了'}
+                            <div class="gantt-subtask" style="height: 40px; min-height: 40px; max-height: 40px; display: flex; align-items: center; margin: 0; padding: 0 8px; border-bottom: 1px solid #f3f4f6; background-color: #fafafa;">
+                                <div class="text-xs text-gray-500 truncate leading-tight">
+                                    ${subtask.title}
                                 </div>
                             </div>
                         `;
@@ -3233,62 +3625,109 @@
                 });
                 
                 ganttHTML += `
+                            </div>
                         </div>
-                        <div class="gantt-scrollable-area">
-                            <div class="gantt-content">
-                                <div class="gantt-header flex">
+                        <div class="gantt-scrollable-wrapper">
+                            <div class="gantt-header-row flex">
                 `;
                 
-                // 日付ヘッダー生成
+                // 日付ヘッダー生成（横スクロール対応）
+                const totalWidth = daysInMonth * 40; // 各日付列40px
+                console.log(`📅 日付ヘッダー生成: ${year}年${month + 1}月 (日数: ${daysInMonth})`); 
+                ganttHTML += `<div style="width: ${totalWidth}px; display: flex; height: 32px;">`;
+                
                 for (let day = 1; day <= daysInMonth; day++) {
                     const date = new Date(year, month, day);
                     const isWeekend = date.getDay() === 0 || date.getDay() === 6;
                     const isToday = date.toDateString() === new Date().toDateString();
                     
                     ganttHTML += `
-                        <div class="gantt-day-column ${isWeekend ? 'gantt-weekend' : ''} ${isToday ? 'gantt-today' : ''}">
-                            <div class="text-xs font-medium">${day}</div>
-                            <div class="text-xs text-gray-400">${['日','月','火','水','木','金','土'][date.getDay()]}</div>
+                        <div class="gantt-day-column gantt-header-cell ${isWeekend ? 'gantt-weekend' : ''} ${isToday ? 'gantt-today' : ''}" style="height: 32px; min-width: 40px; width: 40px; max-width: 40px; flex: 0 0 40px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #f9fafb; border-right: 1px solid #e5e7eb; padding: 0; box-sizing: border-box;">
+                            <div style="font-size: 11px; font-weight: 600; color: #111827; line-height: 1;">${day}</div>
+                            <div style="font-size: 10px; color: #6b7280; line-height: 1;">${['日','月','火','水','木','金','土'][date.getDay()]}</div>
                         </div>
                     `;
                 }
                 
+                ganttHTML += `</div>`;
+                
                 ganttHTML += `
-                                </div>
+                            </div>
+                            <div class="gantt-scrollable-area" id="gantt-timeline">
                 `;
                 
-                // タスクバー生成
-                filteredTasks.forEach(task => {
+                // タスクが空の場合は最小高さを確保
+                if (filteredTasks.length === 0) {
+                    ganttHTML += `
+                        <div class="gantt-row" style="width: ${totalWidth}px; display: flex; height: 40px;">
+                            ${Array.from({length: daysInMonth}, () => '<div class="gantt-day-column"></div>').join('')}
+                        </div>
+                    `;
+                }
+                
+                // タスクバー生成（横スクロール対応）
+                // ※重要：左側と完全に同じ順序で処理する
+                filteredTasks.forEach((task, taskIndex) => {
+                    // 日付を正確に扱うためにDateオブジェクトをコピー
                     const taskStartDate = task.scheduled_date ? new Date(task.scheduled_date) : new Date(task.deadline);
                     const taskEndDate = new Date(task.deadline);
                     const taskSubtasks = showSubtasks ? this.subtasks.filter(st => st.parent_task_id === task.id) : [];
+                    console.log(`プロットタスク${taskIndex + 1}: "${task.title}" - サブタスク${taskSubtasks.length}件`);
+                    
+                    // 日付比較用に正規化した日付を作成（時刻を除去）
+                    const startDateOnly = new Date(taskStartDate.getFullYear(), taskStartDate.getMonth(), taskStartDate.getDate());
+                    const endDateOnly = new Date(taskEndDate.getFullYear(), taskEndDate.getMonth(), taskEndDate.getDate());
+                    
+                    console.log(`📅 タスク "${task.title}" - 開始: ${startDateOnly.toISOString().split('T')[0]}, 終了: ${endDateOnly.toISOString().split('T')[0]}`);
                     
                     // メインタスクバー
-                    ganttHTML += `<div class="gantt-row flex">`;
+                    ganttHTML += `<div class="gantt-row" style="width: ${totalWidth}px; display: flex; height: 40px; align-items: center;">`;
                     
                     for (let day = 1; day <= daysInMonth; day++) {
                         const currentDate = new Date(year, month, day);
                         
-                        // タスクがこの日にかかるかチェック
-                        const isTaskDay = currentDate >= taskStartDate.setHours(0,0,0,0) && 
-                                         currentDate <= taskEndDate.setHours(23,59,59,999);
+                        // デバッグ: 日付比較の詳細をログ出力
+                        if (task.title.includes('ストライプ') && (day === 17 || day === 18)) {
+                            console.log(`🔍 ストライプタスク - ${day}日目`);
+                            console.log(`  現在の日付: ${currentDate.toISOString().split('T')[0]}`);
+                            console.log(`  開始日: ${startDateOnly.toISOString().split('T')[0]}`);
+                            console.log(`  終了日: ${endDateOnly.toISOString().split('T')[0]}`);
+                            console.log(`  タスク対象日?: ${currentDate >= startDateOnly && currentDate <= endDateOnly}`);
+                        }
+                        
+                        // 正確な日付比較（時刻を除いた日付のみ）
+                        const isTaskDay = currentDate >= startDateOnly && currentDate <= endDateOnly;
                         
                         if (isTaskDay) {
-                            const isStart = currentDate.toDateString() === taskStartDate.toDateString();
+                            const isStart = currentDate.getTime() === startDateOnly.getTime();
+                            const isEnd = currentDate.getTime() === endDateOnly.getTime();
                             const priorityClass = task.priority === 'high' ? 'high-priority' : '';
                             const completedClass = task.status === 'completed' ? 'completed' : '';
                             
+                            // タスクバーの表示内容を決定
+                            let barContent = '';
+                            if (isStart && isEnd) {
+                                // 1日だけのタスク
+                                barContent = task.title.substring(0, 4) + (task.title.length > 4 ? '..' : '');
+                            } else if (isStart) {
+                                // 開始日
+                                barContent = task.title.substring(0, 3) + (task.title.length > 3 ? '..' : '');
+                            } else if (isEnd) {
+                                // 終了日
+                                barContent = '▶';
+                            }
+                            
                             ganttHTML += `
-                                <div class="gantt-day-column">
+                                <div class="gantt-day-column" style="min-width: 40px; width: 40px; max-width: 40px; flex: 0 0 40px; padding: 0; box-sizing: border-box; border-right: 1px solid #e5e7eb;">
                                     <div class="gantt-task-bar ${priorityClass} ${completedClass}" 
-                                         title="${task.title}" 
+                                         title="${task.title} (開始: ${startDateOnly.toLocaleDateString()}, 終了: ${endDateOnly.toLocaleDateString()})" 
                                          onclick="app.openTaskModal(app.tasks.find(t => t.id === '${task.id}'))">
-                                        ${isStart ? task.title.substring(0, 6) + (task.title.length > 6 ? '..' : '') : ''}
+                                        ${barContent}
                                     </div>
                                 </div>
                             `;
                         } else {
-                            ganttHTML += `<div class="gantt-day-column"></div>`;
+                            ganttHTML += `<div class="gantt-day-column" style="min-width: 40px; width: 40px; max-width: 40px; flex: 0 0 40px; padding: 0; box-sizing: border-box; border-right: 1px solid #e5e7eb;"></div>`;
                         }
                     }
                     
@@ -3296,29 +3735,38 @@
                     
                     // サブタスクバー
                     taskSubtasks.forEach(subtask => {
-                        ganttHTML += `<div class="gantt-row flex">`;
+                        ganttHTML += `<div class="gantt-row gantt-subtask" style="width: ${totalWidth}px; display: flex; height: 40px; align-items: center; margin: 0; padding: 0;">`;
                         
                         for (let day = 1; day <= daysInMonth; day++) {
                             const currentDate = new Date(year, month, day);
                             
                             if (subtask.deadline) {
                                 const subtaskDate = new Date(subtask.deadline);
-                                const isSubtaskDay = currentDate.toDateString() === subtaskDate.toDateString();
+                                const subtaskDateOnly = new Date(subtaskDate.getFullYear(), subtaskDate.getMonth(), subtaskDate.getDate());
+                                const isSubtaskDay = currentDate.getTime() === subtaskDateOnly.getTime();
+                                
+                                // デバッグ: ストライプタスクの日付確認
+                                if (subtask.title.includes('ストライプ') && (day === 17 || day === 18)) {
+                                    console.log(`🔴 サブタスク "${subtask.title}" - ${day}日目`);
+                                    console.log(`  現在の日付: ${currentDate.toISOString().split('T')[0]}`);
+                                    console.log(`  期限日: ${subtaskDateOnly.toISOString().split('T')[0]}`);
+                                    console.log(`  プロット対象?: ${isSubtaskDay}`);
+                                }
                                 
                                 if (isSubtaskDay) {
                                     ganttHTML += `
-                                        <div class="gantt-day-column">
+                                        <div class="gantt-day-column" style="min-width: 40px; width: 40px; max-width: 40px; flex: 0 0 40px; padding: 0; box-sizing: border-box; border-right: 1px solid #e5e7eb;">
                                             <div class="gantt-subtask-bar ${subtask.completed ? 'completed' : ''}" 
-                                                 title="${subtask.title}">
-                                                ${subtask.title.substring(0, 4) + (subtask.title.length > 4 ? '..' : '')}
+                                                 title="${subtask.title} (期限: ${subtaskDateOnly.toLocaleDateString()})">
+                                                ${subtask.title.substring(0, 3) + (subtask.title.length > 3 ? '..' : '')}
                                             </div>
                                         </div>
                                     `;
                                 } else {
-                                    ganttHTML += `<div class="gantt-day-column"></div>`;
+                                    ganttHTML += `<div class="gantt-day-column" style="min-width: 40px; width: 40px; max-width: 40px; flex: 0 0 40px; padding: 0; box-sizing: border-box; border-right: 1px solid #e5e7eb;"></div>`;
                                 }
                             } else {
-                                ganttHTML += `<div class="gantt-day-column"></div>`;
+                                ganttHTML += `<div class="gantt-day-column" style="min-width: 40px; width: 40px; max-width: 40px; flex: 0 0 40px; padding: 0; box-sizing: border-box; border-right: 1px solid #e5e7eb;"></div>`;
                             }
                         }
                         
@@ -3333,6 +3781,71 @@
                 `;
                 
                 container.innerHTML = ganttHTML;
+                
+                // スクロール連動を設定
+                this.setupGanttScrollSync();
+                
+                // デバッグ: 位置関係の確認用マーカーを追加
+                setTimeout(() => {
+                    const leftHeader = document.querySelector('.gantt-fixed-column .gantt-header-row');
+                    const firstDateColumn = document.querySelector('.gantt-scrollable-wrapper .gantt-day-column:first-child');
+                    
+                    if (leftHeader) {
+                        leftHeader.style.borderRight = '3px solid #ef4444'; // 赤いボーダー
+                    }
+                    if (firstDateColumn) {
+                        firstDateColumn.style.borderLeft = '3px solid #10b981'; // 緑のボーダー
+                    }
+                    
+                    console.log('🎯 位置確認マーカーを設定しました');
+                    console.log('赤いボーダー: 左側タスクリストの右端');
+                    console.log('緑のボーダー: 右側プロットエリアの左端');
+                    console.log('この2つのボーダーが一直線上にないとずれています');
+                }, 100);
+            }
+
+            setupGanttScrollSync() {
+                const taskList = document.getElementById('gantt-task-list');
+                const timeline = document.getElementById('gantt-timeline');
+                const scrollableWrapper = document.querySelector('.gantt-scrollable-wrapper');
+                const dateHeader = document.querySelector('.gantt-scrollable-wrapper .gantt-header-row');
+                
+                if (!taskList || !timeline || !scrollableWrapper) {
+                    console.warn('⚠️ ガントチャートのスクロール連動要素が見つかりません');
+                    console.log('taskList:', taskList, 'timeline:', timeline, 'scrollableWrapper:', scrollableWrapper);
+                    return;
+                }
+                
+                let isTaskListScrolling = false;
+                let isTimelineScrolling = false;
+                
+                // タスクリスト縦スクロール → タイムライン縦スクロール同期（横スクロールは連動しない）
+                taskList.addEventListener('scroll', () => {
+                    if (isTimelineScrolling) return;
+                    isTaskListScrolling = true;
+                    timeline.scrollTop = taskList.scrollTop;
+                    requestAnimationFrame(() => { isTaskListScrolling = false; });
+                });
+                
+                // タイムライン縦スクロール → タスクリスト縦スクロール同期（横スクロールは連動しない）
+                timeline.addEventListener('scroll', () => {
+                    if (isTaskListScrolling) return;
+                    isTimelineScrolling = true;
+                    
+                    // 縦スクロール同期のみ（横スクロールは同期しない）
+                    taskList.scrollTop = timeline.scrollTop;
+                    
+                    // 日付ヘッダーとプロットエリアの横スクロール同期
+                    if (dateHeader && dateHeader.firstElementChild) {
+                        dateHeader.firstElementChild.style.transform = `translateX(-${timeline.scrollLeft}px)`;
+                    }
+                    
+                    requestAnimationFrame(() => { isTimelineScrolling = false; });
+                });
+                
+                console.log('✅ 正しいガントチャートスクロール連動を設定しました');
+                console.log('• 縦スクロール: タスクリスト ↔ プロットエリア');
+                console.log('• 横スクロール: 日付ヘッダー ↔ プロットエリア');
             }
             
             // 顧客管理機能
