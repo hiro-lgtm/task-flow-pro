@@ -5065,6 +5065,19 @@
             }
             
             async syncMainTaskToCalendar(task, calendarId) {
+                // 予定開始日時のバリデーション
+                if (!task.scheduled_date) {
+                    console.log(`⏭️ スキップ: ${task.title} - 予定開始日時が未設定`);
+                    return;
+                }
+                
+                // 日付フォーマットの検証と修正
+                let scheduledDate = task.scheduled_date;
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate)) {
+                    console.warn(`⚠️ 不正な日付フォーマット: ${task.title} - ${scheduledDate}`);
+                    return;
+                }
+                
                 // タスク名：期限 の形式で件名を作成（完了の場合は✅を追加）
                 let summary = task.status === 'completed' ? '✅ ' : '';
                 summary += task.title;
@@ -5073,15 +5086,27 @@
                 }
                 
                 // 予定開始日時と終了時間を計算
-                const startDateTime = new Date(task.scheduled_date + 'T09:00:00'); // デフォルト9:00開始
-                let endDateTime;
+                const startDateTime = new Date(scheduledDate + 'T09:00:00'); // デフォルト9:00開始
                 
+                // 日付オブジェクトの有効性をチェック
+                if (isNaN(startDateTime.getTime())) {
+                    console.error(`❌ 無効な開始日時: ${task.title} - ${scheduledDate}`);
+                    return;
+                }
+                
+                let endDateTime;
                 if (task.estimated_hours && task.estimated_hours > 0) {
                     // 予想作業時間に応じて終了時間を設定
                     endDateTime = new Date(startDateTime.getTime() + (task.estimated_hours * 60 * 60 * 1000));
                 } else {
                     // デフォルトで1時間後
                     endDateTime = new Date(startDateTime.getTime() + (1 * 60 * 60 * 1000));
+                }
+                
+                // 終了日時の有効性もチェック
+                if (isNaN(endDateTime.getTime())) {
+                    console.error(`❌ 無効な終了日時: ${task.title} - 予想作業時間: ${task.estimated_hours}`);
+                    return;
                 }
                 
                 const eventResource = {
