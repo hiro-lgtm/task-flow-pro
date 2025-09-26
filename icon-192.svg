@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <rect width="192" height="192" fill="#3B82F6" rx="32"/>
+  <path d="m48 96 36 36 72-72" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="96" y="160" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="700" fill="#fff">Pro task</text>
+</svg>

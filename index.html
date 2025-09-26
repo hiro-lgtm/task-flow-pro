@@ -17,7 +17,13 @@
     <link rel="shortcut icon" href="favicon.svg" type="image/svg+xml">
     
     <!-- PWA用のアイコン -->
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%233B82F6'/><path d='M40 90L70 120L140 50' stroke='white' stroke-width='8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <link rel="apple-touch-icon" href="icon-192.svg">
+    <link rel="apple-touch-icon" sizes="120x120" href="icon-192.svg">
+    <link rel="apple-touch-icon" sizes="152x152" href="icon-192.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-192.svg">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.svg">
+    <meta name="msapplication-TileImage" content="icon-512.svg">
+    <meta name="msapplication-TileColor" content="#3B82F6">
     <link rel="manifest" href="manifest.json">
     
     <title>TaskFlow Pro - 完全版</title>
@@ -623,16 +629,146 @@
             border-bottom-width: 3px !important;
         }
         
+        /* スマホでのタブメニュー改善 - 全タブ一画面表示 */
         @media screen and (max-width: 640px) {
+            /* タブナビゲーション全体の調整 */
+            .tab-navigation {
+                padding: 0 4px;
+                overflow: visible; /* スクロール無効化 */
+                width: 100%;
+            }
+            
+            /* グリッドレイアウトの改善 - 5分割で固定 */
+            .tab-grid {
+                display: grid !important;
+                grid-template-columns: repeat(5, 1fr); /* 5等分 */
+                gap: 2px;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            /* タブボタンの改善 */
             .tab-button {
-                min-width: 60px;
-                border-radius: 6px;
-                min-height: 60px; /* さらにタッチしやすく */
+                min-width: 0; /* 最小幅なし */
+                width: 100%; /* 親の幅に合わせる */
+                padding: 3px 1px; /* パディング最小化 */
+                border-radius: 4px;
+                min-height: 46px; /* タッチしやすく */
+                font-size: 10px; /* フォントサイズを小さく */
+                flex-shrink: 1; /* 縮小許可 */
+                white-space: nowrap;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden; /* はみ出し防止 */
+            }
+            
+            .tab-button i {
+                font-size: 14px; /* アイコンサイズ調整 */
+                margin-bottom: 2px;
+            }
+            
+            .tab-button span {
+                font-size: 9px; /* テキストサイズ調整 */
+                line-height: 1.1;
+                text-align: center;
             }
             
             .tab-button.active {
                 background-color: rgba(59, 130, 246, 0.1);
                 border-bottom-width: 3px !important;
+                color: #3b82f6;
+            }
+            
+            /* ヘッダー全体の調整 */
+            .main-header {
+                padding: 0 8px;
+            }
+            
+            .header-title {
+                font-size: 16px; /* タイトルサイズ調整 */
+            }
+            
+            /* ヘッダーロゴ部分の調整 */
+            .header-logo {
+                flex-shrink: 1;
+                min-width: 0;
+            }
+            
+            .header-logo i {
+                font-size: 18px; /* アイコンサイズ縮小 */
+                margin-right: 8px;
+            }
+        }
+        
+        /* 極小画面での調整 */
+        @media screen and (max-width: 480px) {
+            .tab-button {
+                min-height: 44px;
+                padding: 3px 1px;
+            }
+            
+            .tab-button i {
+                font-size: 12px;
+                margin-bottom: 1px;
+            }
+            
+            .tab-button span {
+                font-size: 8px;
+                line-height: 1.0;
+            }
+            
+            .main-header {
+                padding: 0 4px;
+            }
+            
+            .header-title {
+                font-size: 14px;
+            }
+        }
+        
+        /* 超極小画面での調整 */
+        @media screen and (max-width: 360px) {
+            .tab-button {
+                min-height: 36px;
+                padding: 1px;
+            }
+            
+            .tab-button i {
+                font-size: 10px;
+                margin-bottom: 1px;
+            }
+            
+            .tab-button span {
+                font-size: 6px;
+                line-height: 0.9;
+            }
+        }
+        
+        /* さらに極小画面での調整（320px以下） */
+        @media screen and (max-width: 320px) {
+            .tab-button {
+                min-height: 34px;
+                padding: 1px 0;
+            }
+            
+            .tab-button i {
+                font-size: 9px;
+                margin-bottom: 0px;
+            }
+            
+            .tab-button span {
+                font-size: 5px;
+                line-height: 0.8;
+            }
+            
+            .main-header {
+                padding: 0 2px;
+            }
+            
+            .header-title {
+                font-size: 12px;
             }
         }
         
@@ -755,34 +891,34 @@
         <!-- メインナビゲーション -->
         <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
             <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-16">
-                    <div class="flex items-center flex-shrink-0">
+                <div class="flex items-center justify-between h-16 main-header">
+                    <div class="flex items-center flex-shrink-0 header-logo">
                         <i class="fas fa-tasks text-blue-600 text-2xl mr-3"></i>
-                        <h1 class="text-xl font-bold text-gray-900">TaskFlow Pro</h1>
+                        <h1 class="text-xl font-bold text-gray-900 header-title">TaskFlow Pro</h1>
                     </div>
                     
                     <!-- タブナビゲーション -->
-                    <div class="flex justify-center flex-1 max-w-md mx-auto">
-                        <div class="grid grid-cols-5 w-full gap-1 sm:gap-4">
+                    <div class="flex justify-center flex-1 min-w-0 tab-navigation">
+                        <div class="grid grid-cols-5 w-full min-w-0 gap-1 sm:gap-4 tab-grid">
                             <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 active flex flex-col items-center justify-center min-h-[48px]" data-tab="tasks" style="touch-action: manipulation;">
                                 <i class="fas fa-list text-lg mb-1"></i>
-                                <span class="text-xs leading-none">タスク</span>
+                                <span class="text-xs leading-none"><span class="hidden sm:inline">タスク</span><span class="sm:hidden">タスク</span></span>
                             </button>
                             <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex flex-col items-center justify-center min-h-[48px]" data-tab="gantt" style="touch-action: manipulation;">
                                 <i class="fas fa-chart-gantt text-lg mb-1"></i>
-                                <span class="text-xs leading-none">ガント</span>
+                                <span class="text-xs leading-none"><span class="hidden sm:inline">ガント</span><span class="sm:hidden">ガント</span></span>
                             </button>
                             <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex flex-col items-center justify-center min-h-[48px]" data-tab="clients" style="touch-action: manipulation;">
                                 <i class="fas fa-users text-lg mb-1"></i>
-                                <span class="text-xs leading-none">顧客</span>
+                                <span class="text-xs leading-none"><span class="hidden sm:inline">顧客</span><span class="sm:hidden">顧客</span></span>
                             </button>
                             <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex flex-col items-center justify-center min-h-[48px]" data-tab="reports" style="touch-action: manipulation;">
                                 <i class="fas fa-chart-bar text-lg mb-1"></i>
-                                <span class="text-xs leading-none">レポート</span>
+                                <span class="text-xs leading-none"><span class="hidden sm:inline">レポート</span><span class="sm:hidden">分析</span></span>
                             </button>
                             <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex flex-col items-center justify-center min-h-[48px]" data-tab="settings" style="touch-action: manipulation;">
                                 <i class="fas fa-cog text-lg mb-1"></i>
-                                <span class="text-xs leading-none">設定</span>
+                                <span class="text-xs leading-none"><span class="hidden sm:inline">設定</span><span class="sm:hidden">設定</span></span>
                             </button>
                         </div>
                     </div>
@@ -1478,6 +1614,7 @@
                 this.googleCalendarApiKey = null;
                 this.googleAccessToken = null;
                 this.isGoogleCalendarInitialized = false;
+                this.calendarSyncInProgress = false; // 重複同期防止フラグ
                 
                 // 🔥 Firebase同期設定
                 this.firebaseEnabled = this.settings.firebaseEnabled || false;
@@ -5097,12 +5234,28 @@
             
             async syncTasksToCalendar() {
                 try {
+                    // 重複実行防止チェック
+                    if (this.calendarSyncInProgress) {
+                        console.warn('⚠️ カレンダー同期が既に進行中です。重複実行をキャンセルします。');
+                        this.updateCalendarStatus('同期が既に進行中です', 'warning');
+                        return;
+                    }
+                    
                     if (!this.googleAccessToken) {
                         this.updateCalendarStatus('Google認証が必要です', 'error');
                         return;
                     }
                     
+                    // 同期開始フラグを設定
+                    this.calendarSyncInProgress = true;
+                    const syncButton = document.getElementById('sync-tasks-to-calendar');
+                    if (syncButton) {
+                        syncButton.disabled = true;
+                        syncButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>同期中...';
+                    }
+                    
                     const calendarId = document.getElementById('calendar-id').value || 'primary';
+                    console.log(`🚀 カレンダー同期開始 [カレンダーID: ${calendarId}]`);
                     // 予定開始日時が設定されているタスク（完了・未完了問わず）を同期
                     const syncableTasks = this.tasks.filter(task => 
                         task.scheduled_date
@@ -5151,6 +5304,15 @@
                 } catch (error) {
                     console.error('カレンダー同期エラー:', error);
                     this.updateCalendarStatus(`同期エラー: ${error.message}`, 'error');
+                } finally {
+                    // 同期完了フラグをリセット
+                    this.calendarSyncInProgress = false;
+                    const syncButton = document.getElementById('sync-tasks-to-calendar');
+                    if (syncButton) {
+                        syncButton.disabled = false;
+                        syncButton.innerHTML = '<i class="fas fa-sync mr-1"></i>タスクを同期';
+                    }
+                    console.log('🏁 カレンダー同期処理完了');
                 }
             }
             
@@ -5299,21 +5461,49 @@
                 };
                 
                 // 既存のイベントをチェック（TaskFlow IDでユニークに識別）
+                // より広範囲で重複チェックを実施
+                const searchStartTime = new Date();
+                searchStartTime.setFullYear(searchStartTime.getFullYear() - 1); // 1年前から
+                const searchEndTime = new Date();
+                searchEndTime.setFullYear(searchEndTime.getFullYear() + 1); // 1年後まで
+                
                 const existingEvents = await gapi.client.calendar.events.list({
                     calendarId: calendarId,
                     privateExtendedProperty: `taskflow_task_id=${task.id}`,
                     showDeleted: false,
                     singleEvents: true,
-                    timeMin: new Date(task.scheduled_date).toISOString(),
-                    timeMax: new Date(new Date(task.scheduled_date).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1年後まで検索
+                    timeMin: searchStartTime.toISOString(),
+                    timeMax: searchEndTime.toISOString(),
+                    maxResults: 100 // 十分な数を確保
                 });
                 
-                if (existingEvents.result.items.length > 0) {
-                    // 既存のイベントを更新
+                console.log(`🔍 重複チェック結果 [${task.title}]: 既存イベント数 = ${existingEvents.result.items?.length || 0}`);
+                
+                if (existingEvents.result.items && existingEvents.result.items.length > 0) {
+                    // 既存のイベントが複数ある場合、重複を削除
+                    if (existingEvents.result.items.length > 1) {
+                        console.warn(`⚠️ 重複イベント検出 [${task.title}]: ${existingEvents.result.items.length}個 - 重複削除中...`);
+                        
+                        // 最初のイベント以外を削除
+                        for (let i = 1; i < existingEvents.result.items.length; i++) {
+                            try {
+                                await gapi.client.calendar.events.delete({
+                                    calendarId: calendarId,
+                                    eventId: existingEvents.result.items[i].id
+                                });
+                                console.log(`🗑️ 重複イベント削除完了: ${existingEvents.result.items[i].id}`);
+                            } catch (deleteError) {
+                                console.error(`❌ 重複イベント削除エラー:`, deleteError);
+                            }
+                        }
+                    }
+                    
+                    // 最初（残った）イベントを更新
                     const eventId = existingEvents.result.items[0].id;
                     const existingEvent = existingEvents.result.items[0];
                     
                     console.log(`🔄 タスク "${task.title}" のカレンダーイベントを更新中...`);
+                    console.log(`   - イベントID: ${eventId}`);
                     console.log(`   - 旧開始時間: ${existingEvent.start.dateTime || existingEvent.start.date}`);
                     console.log(`   - 新開始時間: ${eventResource.start.dateTime}`);
                     console.log(`   - 旧件名: ${existingEvent.summary}`);
@@ -5329,15 +5519,16 @@
                 } else {
                     // 新しいイベントを作成
                     console.log(`➕ 新規カレンダーイベント作成: ${task.title}`);
+                    console.log(`   - タスクID: ${task.id}`);
                     console.log(`   - 開始時間: ${eventResource.start.dateTime}`);
                     console.log(`   - 件名: ${eventResource.summary}`);
                     
-                    await gapi.client.calendar.events.insert({
+                    const createdEvent = await gapi.client.calendar.events.insert({
                         calendarId: calendarId,
                         resource: eventResource
                     });
                     
-                    console.log(`✅ イベント作成完了: ${task.title}`);
+                    console.log(`✅ イベント作成完了: ${task.title} (EventID: ${createdEvent.result.id})`);
                 }
             }
             
