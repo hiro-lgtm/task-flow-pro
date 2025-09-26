@@ -1,1 +1,43 @@
-{\n  \"name\": \"TaskFlow - 直感的タスク管理\",\n  \"short_name\": \"TaskFlow\",\n  \"description\": \"iPhoneで動く直感的なタスク管理アプリ\",\n  \"start_url\": \"/\",\n  \"display\": \"standalone\",\n  \"orientation\": \"portrait\",\n  \"theme_color\": \"#3B82F6\",\n  \"background_color\": \"#F9FAFB\",\n  \"icons\": [\n    {\n      \"src\": \"data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxODAgMTgwJz48cmVjdCB3aWR0aD0nMTgwJyBoZWlnaHQ9JzE4MCcgZmlsbD0nIzNCODJGNicvPjxwYXRoIGQ9J000MCA5MEw3MCAxMjBMMTQwIDUwJyBzdHJva2U9J3doaXRlJyBzdHJva2Utd2lkdGg9JzgnIGZpbGw9J25vbmUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCcvPjwvc3ZnPg==\",\n      \"sizes\": \"192x192\",\n      \"type\": \"image/svg+xml\"\n    },\n    {\n      \"src\": \"data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxODAgMTgwJz48cmVjdCB3aWR0aD0nMTgwJyBoZWlnaHQ9JzE4MCcgZmlsbD0nIzNCODJGNicvPjxwYXRoIGQ9J000MCA5MEw3MCAxMjBMMTQwIDUwJyBzdHJva2U9J3doaXRlJyBzdHJva2Utd2lkdGg9JzgnIGZpbGw9J25vbmUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCcvPjwvc3ZnPg==\",\n      \"sizes\": \"512x512\",\n      \"type\": \"image/svg+xml\"\n    }\n  ],\n  \"categories\": [\"productivity\", \"utilities\"],\n  \"lang\": \"ja\",\n  \"screenshots\": [\n    {\n      \"src\": \"data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSczMjAnIGhlaWdodD0nNTY4Jz48cmVjdCB3aWR0aD0nMzIwJyBoZWlnaHQ9JzU2OCcgZmlsbD0nI0Y5RkFGQicvPjx0ZXh0IHg9JzE2MCcgeT0nMjg0JyB0ZXh0LWFuY2hvcj0nbWlkZGxlJyBmb250LWZhbWlseT0nQXJpYWwnIGZvbnQtc2l6ZT0nMjQnIGZpbGw9JyMzQjgyRjYnPlRhc2tGbG93PC90ZXh0Pjwvc3ZnPg==\",\n      \"sizes\": \"320x568\",\n      \"type\": \"image/svg+xml\",\n      \"form_factor\": \"narrow\"\n    }\n  ]\n}
+{
+  "name": "TaskFlow Pro - 企業経営改善専門家向けタスク管理",
+  "short_name": "TaskFlow Pro",
+  "description": "企業経営改善の伴奏支援と監査役向け完全機能統合型タスク管理システム",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#3B82F6",
+  "background_color": "#F9FAFB",
+  "lang": "ja",
+  "dir": "ltr",
+  "id": "taskflow-pro",
+  "categories": ["productivity", "business", "utilities"],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAG+UlEQVR4nO3dW4hcZRbF8f9K0pFEE0k0Gm80ajTxhqKi4g1fxBdBfBBFfBEfBPHyIIr6ID6IiC/ig/ggPogi4oP4IKKIiqKiouINb3jDG954w1s0Gm80Gs1ltXt6urtSXZW6zl5n7/8PFnSmu6rOqe+stb+99nfOaWdmZhgbG2N8fJyJiQkmJyeZmppiZmaGmZkZpqenmZ6eZnp6mpmZGWZnZ5mdnWVubo652VnmZmeZm51lbnaW+dlZ5ufnWZifZ2F+noWFBRYWFlhcXGRxcZGlpSWWlpZYXl5meXmZlZUVVldXWVtbY21tjfX1dTY2Ntjc3GRra4vt7W12dnbY3d1lb2+P/f199g8OODg44PDwkKOjI46Pjzk5OeH09JSXL1/y6tUrXr9+zZs3b3j79i3v3r3jw4cPfPz4kU+fPvH582e+fPnC169f+fbtG9+/f+fHjx/8/PmTX79+8fv3b/7++2/++ecf/v3vf/n333/599//+MjMzL///pu///6bv//+m7///Zs///yTP//8kz/++IM//viD33//nd9++43ffvuN33//na9fv/L58OfHx48f+fDhA+/fv+ft27e8efOG169f8+rVK168eMHz5895+fIlL1++5MWLF7x48YIXL17w/PlzXrx4wfPnz3n+/DnPnz/n2bNnPHv2jGfPnvHs2TOePXvGs2fPePbsGc+ePePZs2c8e/aMp0+f8vTpU54+fcrTp0958uQJT5484cmTJzx58oTHjx/z+PFjHj9+zKNHj3j06BGPHj3i4cOHPHz4kIcPH/Lg/w==",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjanVNnVFPpFj333vRCS4iAlEtvUhUIIFJCi4AUkSYqIQkQSoghodkVUcERRUUEG8igiAOOjoCMFVEsDIoK2AfkIaKOg6OIisr74Xuja9a89+bN/rXXPues852zzwfACAyWSDNRNYAMqUIeEeCDx8TG4eQuQIEKJHAAEAizZCFz/SMBAPh+PDwrIsAHvgABeNMLCADATZvAMByH/w/qQplcAYCEAcB0kThLCIAUAEB6jkKmAEBGAYCdmCZTAKAEAGDLY2LjAFAtAGAnf+bTAICd+Jl7AQBblCEVAaCRACATZYhEAGg7AKzPVopFAFgwABRmS8Q5ANgtADBJV2ZIALC3AMDOEAuyAAgMADBRiIUpAAR7AGDIIyN4AISZABRG8lc88SuuEOcqAAB4mbI8uSQ5RYFbCC1xB1dXLh4ozkkXKxQ2YQJhmkAuwnmZGTKBNA/g88wAAKCRFRHgg/P9eM4Ors7ONo62Dl8t6r8G/yJiYuP+5c+rcEAAAOF0ftH+LC+zGoA7BoBt/qIl7gRoXgugdfeLZrIPQLUAoOnaV/Nw+H48PEWhkLnZ2eXk5NhKxEJbYcpXff5nwl/AV/1s+X48/Pf14L7iJIEyXYFHBPjgwsz0TKUcz5IJhGLc5o9H/LcL//wd0yLESWK5WCoU41EScY5EmozzMqUiiUKSKcUl0v9k4t8s+wM+3zUAsGo+AXuRLahdYwP2SycQWHTA4vcAAPK7b8HUKAgDgGiD4c93/+8//UegJQCAZkmScQAAXkQkLlTKsz/HCAAARKCBKrBBG/TBGCzABhzBBdzBC/xgNoRCJMTCQhBCCmSAHHJgKayCQiiGzbAdKmAv1EAdNMBRaIaTcA4uwlW4Dj1wD/phCJ7BKLyBCQRByAgTYSHaiAFiilgjjggXmYX4IcFIBBKLJCDJiBRRIkuRNUgxUopUIFVIHfI9cgI5h1xGupE7yAAygvyGvEcxlIGyUT3UDLVDuag3GoRGogvQZHQxmo8WoJvQcrQaPYw2oefQq2gP2o8+Q8cwwOgYBzPEbDAuxsNCsTgsCZNjy7EirAyrxhqwVqwDu4n1Y8+xdwQSgUXACTYEd0IgYR5BSFhMWE7YSKggHCQ0EdoJNwkDhFHCJyKTqEu0JroR+cQYYjIxh1hILCPWEo8TLxB7iEPENyQSiUMyJ7mQAkmxpFTSEtJG0m5SI+ksqZs0SBojk8naZGuyBzmULCAryIXkneTD5DPkG+Qh8lsKnWJAcaT4U+IoUspqShnlEOU05QZlmDJBVaOaUt2ooVQRNY9aQq2htlKvUYeoEzR1mjnNgxZJS6WtopXTGmgXaPdpr+h0uhHdlR5Ol9BX0svpR+iX6AP0dwwNhhWDx4hnKBmbGAcYZxl3GK+YTKYZ04sZx1QwNzHrmOeZD5lvVVgqtip8FZHKCpVKlSaVGyovVKmqpqreqgtV81XLVI+pXlN9rkZVM1PjqQnUlqtVqp1Q61MbU2epO6iHqmeob1Q/pH5Z/YkGWcNMw09DpFGgsV/jvMYgC2MZs3gsIWsNq4Z1gTXEJrHN2Xx2KruY/R27iz2qqaE5QzNKM1ezUvOUZj8H45hx+Jx0TgnnKKeX836K3hTvKeIpG6Y0TLkxZVxrqpaXllirSKtRq0frvTau7aedpr1Fu1n7gQ5Bx0onXCdHZ4/OBZ3nU9lT3acKpxZNPTr1ri6qa6UbobtEd79up+6Ynr5egJ5Mb6feeb3n+hx9L/1U/W36p/VHDFgGswwkBtsMzhg8xTVxbzwdL8fb8VFDXcNAQ6VhlWGX4SU==",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNzUiIGhlaWdodD0iODEyIj48cmVjdCB3aWR0aD0iMzc1IiBoZWlnaHQ9IjgxMiIgZmlsbD0iI0Y5RkFGQiIvPjxyZWN0IHdpZHRoPSIzNzUiIGhlaWdodD0iMTAwIiBmaWxsPSIjM0I4MkY2Ii8+PHRleHQgeD0iMTg4IiB5PSI2MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmYiPlRhc2tGbG93IFBybzwvdGV4dD48cmVjdCB4PSIyMCIgeT0iMTQwIiB3aWR0aD0iMzM1IiBoZWlnaHQ9IjgwIiBmaWxsPSIjZmZmIiByeD0iOCIvPjx0ZXh0IHg9IjQwIiB5PSIxNzAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjMzc0MTUxIj7poIjmlq3lsqHliJ3jgYvjgonjga7kuqHmpa3ntqDnkIY8L3RleHQ+PHRleHQgeD0iNDAiIHk9IjIwMCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2Mzc1OEYiPuacn+mZkDog5LiK5Yab6ZaL55m6IDIwMjU5LzI2PC90ZXh0Pjwvc3ZnPg==",
+      "sizes": "375x812",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "TaskFlow Pro メイン画面"
+    }
+  ]
+}

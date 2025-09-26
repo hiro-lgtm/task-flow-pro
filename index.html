@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="TaskFlow">
@@ -10,6 +11,10 @@
     
     <!-- Permissions Policy対応 -->
     <meta http-equiv="Permissions-Policy" content="browsing-topics=()">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="shortcut icon" href="favicon.svg" type="image/svg+xml">
     
     <!-- PWA用のアイコン -->
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%233B82F6'/><path d='M40 90L70 120L140 50' stroke='white' stroke-width='8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
@@ -19,6 +24,54 @@
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // 本番環境での開発警告を抑制
+        if (typeof tailwind !== 'undefined' && tailwind.config) {
+            tailwind.config = {
+                corePlugins: {
+                    preflight: false
+                },
+                content: ["./index.html"],
+                theme: {
+                    extend: {
+                        fontFamily: {
+                            'sans': ['Inter', 'system-ui', 'sans-serif']
+                        }
+                    }
+                }
+            };
+        }
+        
+        // コンソール警告を抑制（本番環境用）
+        if (typeof console !== 'undefined') {
+            const originalWarn = console.warn;
+            const originalError = console.error;
+            
+            console.warn = function(...args) {
+                const message = args.join(' ');
+                // 開発環境で不要な警告を抑制
+                if (message.includes('cdn.tailwindcss.com should not be used in production') ||
+                    (message.includes('tailwindcss') && message.includes('production')) ||
+                    message.includes('Cross-Origin-Opener-Policy') ||
+                    message.includes('window.opener')) {
+                    return; // 指定された警告を完全に抑制
+                }
+                originalWarn.apply(console, args);
+            };
+            
+            // エラーレベルの警告も抑制
+            console.error = function(...args) {
+                const message = args.join(' ');
+                if (message.includes('cdn.tailwindcss.com should not be used in production') ||
+                    (message.includes('tailwindcss') && message.includes('production')) ||
+                    message.includes('Cross-Origin-Opener-Policy') ||
+                    message.includes('window.opener')) {
+                    return; // 指定されたエラーを完全に抑制
+                }
+                originalError.apply(console, args);
+            };
+        }
+    </script>
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1108,6 +1161,16 @@
                             <span id="sync-mode-text">同期モード確認中...</span>
                         </div>
                         
+                        <!-- Firebase接続ステータス -->
+                        <div class="mt-2 p-2 bg-white border border-gray-200 rounded">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700">Firebase接続状態:</span>
+                                <span id="firebase-status" class="text-sm text-gray-500">
+                                    <i class="fas fa-circle-notch fa-spin mr-1"></i>初期化中...
+                                </span>
+                            </div>
+                        </div>
+                        
                         <!-- 🔄 手動同期オプション -->
                         <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                             <h4 class="font-semibold text-yellow-800 mb-2">
@@ -1547,9 +1610,27 @@
                     
                 } catch (error) {
                     console.error('❌ Firebase初期化エラー:', error);
-                    this.updateFirebaseStatus('error');
+                    
+                    // AdBlocker やブラウザ拡張機能によるブロックの検出
+                    const isBlockedByClient = error.message?.includes('ERR_BLOCKED_BY_CLIENT') || 
+                                            error.message?.includes('network error') ||
+                                            error.code === 'network-request-failed';
+                    
+                    if (isBlockedByClient) {
+                        console.warn('⚠️ Firebase接続がブロックされています (AdBlocker等)');
+                        console.log('🔄 オフラインモードで継続...');
+                        this.updateFirebaseStatus('blocked');
+                        
+                        // オフラインモードのメッセージを表示
+                        this.showOfflineModeNotification();
+                    } else {
+                        this.updateFirebaseStatus('error');
+                    }
+                    
                     this.enableGoogleSigninBtn(); // エラー時もボタンは有効化
-                    return Promise.reject(error);
+                    
+                    // エラーが発生してもアプリケーション自体は動作を継続
+                    return Promise.resolve();
                 }
             }
             
@@ -1662,7 +1743,20 @@
                     
                 } catch (error) {
                     console.error('❌ Firebase同期開始エラー:', error);
-                    this.updateFirebaseStatus('error');
+                    
+                    // ネットワークエラーやブロックされたクライアントの検出
+                    const isNetworkError = error.message?.includes('ERR_BLOCKED_BY_CLIENT') ||
+                                         error.message?.includes('network error') ||
+                                         error.code === 'unavailable' ||
+                                         error.code === 'network-request-failed';
+                    
+                    if (isNetworkError) {
+                        console.warn('⚠️ Firebase同期がブロックされました (AdBlocker等)');
+                        this.updateFirebaseStatus('blocked');
+                        this.showOfflineModeNotification();
+                    } else {
+                        this.updateFirebaseStatus('error');
+                    }
                 }
             }
             
@@ -1700,6 +1794,19 @@
                     
                 } catch (error) {
                     console.error('❌ Firebaseアップロードエラー:', error);
+                    
+                    // ネットワークエラーやブロックされたクライアントの検出
+                    const isNetworkError = error.message?.includes('ERR_BLOCKED_BY_CLIENT') ||
+                                         error.message?.includes('network error') ||
+                                         error.code === 'unavailable' ||
+                                         error.code === 'network-request-failed';
+                    
+                    if (isNetworkError) {
+                        console.warn('⚠️ Firebase同期がブロックされました');
+                        this.updateFirebaseStatus('blocked');
+                    } else {
+                        this.updateFirebaseStatus('error');
+                    }
                 } finally {
                     this.syncInProgress = false;
                 }
@@ -1943,6 +2050,56 @@
                     // 設定不完了フラグを削除
                     signinBtn.removeAttribute('data-config-incomplete');
                 }
+            }
+            
+            // Firebase状態管理メソッド
+            updateFirebaseStatus(status) {
+                const statusElement = document.getElementById('firebase-status');
+                const statusMap = {
+                    'pending': { text: '接続中...', class: 'text-yellow-600', icon: 'fas fa-spinner fa-spin' },
+                    'success': { text: '同期中', class: 'text-green-600', icon: 'fas fa-check-circle' },
+                    'error': { text: '接続エラー', class: 'text-red-600', icon: 'fas fa-exclamation-circle' },
+                    'blocked': { text: 'オフラインモード', class: 'text-orange-600', icon: 'fas fa-wifi-slash' }
+                };
+                
+                if (statusElement && statusMap[status]) {
+                    const { text, class: className, icon } = statusMap[status];
+                    statusElement.innerHTML = `<i class="${icon} mr-1"></i>${text}`;
+                    statusElement.className = `text-sm ${className}`;
+                }
+            }
+            
+            showOfflineModeNotification() {
+                // トースト通知を表示
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 rounded-md shadow-lg z-50 max-w-md';
+                notification.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-wifi-slash mr-2"></i>
+                        <div>
+                            <h4 class="font-medium">オフラインモード</h4>
+                            <p class="text-sm mt-1">Firebase接続がブロックされています。AdBlocker等の拡張機能をご確認ください。データはローカルに保存されます。</p>
+                        </div>
+                        <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-orange-500 hover:text-orange-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // 10秒後に自動で消去
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 10000);
+            }
+            
+            showGoogleAuthPrompt() {
+                console.log('🔐 Google認証プロンプト表示');
+                // ボタンを有効にしてユーザーアクションを促す
+                this.enableGoogleSigninBtn();
             }
             
             enableGoogleSigninBtnWithConfig() {
@@ -5073,7 +5230,12 @@
                 
                 // 日付フォーマットの検証と修正
                 let scheduledDate = task.scheduled_date;
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate)) {
+                
+                // ISO日付時刻形式 (2025-09-17T07:13) を日付部分のみに変換
+                if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(scheduledDate)) {
+                    scheduledDate = scheduledDate.split('T')[0]; // 日付部分のみ取得
+                    console.log(`📅 日付時刻を日付に変換: ${task.title} - ${task.scheduled_date} → ${scheduledDate}`);
+                } else if (!/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate)) {
                     console.warn(`⚠️ 不正な日付フォーマット: ${task.title} - ${scheduledDate}`);
                     return;
                 }
