@@ -377,16 +377,7 @@
             border-bottom: 1px solid #e5e7eb;
         }
         
-        .gantt-subtask {
-            min-height: 40px;
-            height: 40px;
-            max-height: 40px;
-            overflow: hidden;
-            display: flex;
-            align-items: stretch;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
+
         
         /* セレクトボックスのドロップダウンが正常に表示されるようにする */
         #gantt-filter-client,
@@ -427,7 +418,23 @@
             background-color: #f3f4f6;
         }
         
-        .gantt-subtask {
+        /* ガントチャートのサブタスク行 - メインタスクと同じ位置に表示 */
+        .gantt-row.gantt-subtask {
+            min-height: 40px;
+            height: 40px;
+            max-height: 40px;
+            overflow: hidden;
+            display: flex;
+            align-items: stretch;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: 11px;
+            color: #6b7280;
+            flex-shrink: 0 !important;
+        }
+        
+        /* タスクリストのサブタスク項目（インデント付き） */
+        .gantt-subtask:not(.gantt-row) {
             padding-left: 20px;
             font-size: 11px;
             color: #6b7280;
@@ -462,11 +469,11 @@
         .gantt-task-bar {
             height: 18px;
             background: #3b82f6;
-            border-radius: 2px;
+            border-radius: 0; /* 境界線を滑らかにするため角丸を無効化 */
             font-size: 9px;
             color: white;
             padding: 0 2px;
-            margin: 1px;
+            margin: 1px 0; /* 左右のマージンを除去して連続表示 */
             display: flex;
             align-items: center;
             justify-content: flex-start;
@@ -475,8 +482,9 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            width: calc(100% - 2px);
+            width: 100%; /* セル幅全体を使用 */
             box-sizing: border-box;
+            border: none; /* 境界線を除去 */
         }
         
         .gantt-task-bar:hover {
@@ -646,40 +654,7 @@
             z-index: 10;
         }
         
-        .gantt-task-bar {
-            height: 24px;
-            background: #3B82F6;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            padding: 0 8px;
-            color: white;
-            font-weight: 500;
-            font-size: 11px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            min-width: 50px;
-            position: relative;
-            margin: 2px 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .gantt-task-bar:hover {
-            background: #2563EB;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .gantt-task-bar.completed {
-            background: #10B981;
-            opacity: 0.8;
-        }
-        
-        .gantt-task-bar.completed:hover {
-            background: #059669;
-        }
+
         
         .gantt-task-bar.high-priority {
             background: #EF4444;
@@ -772,7 +747,7 @@
                             <input type="text" id="search-input" placeholder="タスクを検索..." 
                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         </div>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 flex-wrap">
                             <select id="filter-status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                 <option value="">全ステータス</option>
                                 <option value="pending">未着手</option>
@@ -784,6 +759,9 @@
                                 <option value="high">高</option>
                                 <option value="medium">中</option>
                                 <option value="low">低</option>
+                            </select>
+                            <select id="filter-client" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">全顧客</option>
                             </select>
                         </div>
                     </div>
@@ -865,89 +843,158 @@
                     </button>
                 </div>
 
-                <div id="clients-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- 顧客カードがここに動的に表示される -->
+                <!-- 顧客リスト表示 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">顧客名</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">担当者</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">連絡先</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">タスク</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">完了</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">時間</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clients-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- 顧客データがここに動的に表示される -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="clients-empty-state" class="hidden text-center py-12 text-gray-500">
+                        <i class="fas fa-users text-4xl mb-4"></i>
+                        <p class="text-lg">顧客がまだ登録されていません</p>
+                        <p class="text-sm">新しい顧客を追加してみましょう</p>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- レポート画面 -->
         <div id="reports-view" class="tab-content hidden">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">レポート・分析</h2>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">レポート・分析</h2>
                 
                 <!-- 統計サマリー -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <i class="fas fa-tasks text-blue-600 text-2xl"></i>
+                                <i class="fas fa-tasks text-blue-600 text-lg"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">総タスク数</p>
-                                <p id="total-tasks" class="text-2xl font-semibold text-gray-900">0</p>
+                            <div class="ml-3">
+                                <p class="text-xs font-medium text-gray-500">総タスク数</p>
+                                <p id="total-tasks" class="text-lg font-semibold text-gray-900">0</p>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+                                <i class="fas fa-check-circle text-green-600 text-lg"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">完了タスク</p>
-                                <p id="completed-tasks" class="text-2xl font-semibold text-gray-900">0</p>
+                            <div class="ml-3">
+                                <p class="text-xs font-medium text-gray-500">完了タスク</p>
+                                <p id="completed-tasks" class="text-lg font-semibold text-gray-900">0</p>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <i class="fas fa-clock text-orange-600 text-2xl"></i>
+                                <i class="fas fa-clock text-orange-600 text-lg"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">総作業時間</p>
-                                <p id="total-hours" class="text-2xl font-semibold text-gray-900">0h</p>
+                            <div class="ml-3">
+                                <p class="text-xs font-medium text-gray-500">総作業時間</p>
+                                <p id="total-hours" class="text-lg font-semibold text-gray-900">0h</p>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <i class="fas fa-users text-purple-600 text-2xl"></i>
+                                <i class="fas fa-users text-purple-600 text-lg"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">顧客数</p>
-                                <p id="total-clients" class="text-2xl font-semibold text-gray-900">0</p>
+                            <div class="ml-3">
+                                <p class="text-xs font-medium text-gray-500">顧客数</p>
+                                <p id="total-clients" class="text-lg font-semibold text-gray-900">0</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- チャート -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">タスクステータス分布</h3>
-                        <div style="height: 300px;">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-3">タスクステータス分布</h3>
+                        <div style="height: 200px;">
                             <canvas id="status-chart"></canvas>
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">優先度別タスク</h3>
-                        <div style="height: 300px;">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-3">優先度別タスク</h3>
+                        <div style="height: 200px;">
                             <canvas id="priority-chart"></canvas>
                         </div>
                     </div>
+                    
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-3">月別作業時間推移</h3>
+                        <div style="height: 200px;">
+                            <canvas id="monthly-hours-chart"></canvas>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">月別作業時間推移</h3>
-                    <div style="height: 400px;">
-                        <canvas id="monthly-hours-chart"></canvas>
+                
+                <!-- 月次クライアント別レポート -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
+                        <h3 class="text-sm font-semibold text-gray-900">月次クライアント別作業時間</h3>
+                        <div class="flex items-center space-x-2">
+                            <select id="report-year" class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </select>
+                            <select id="report-month" class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="1">1月</option>
+                                <option value="2">2月</option>
+                                <option value="3">3月</option>
+                                <option value="4">4月</option>
+                                <option value="5">5月</option>
+                                <option value="6">6月</option>
+                                <option value="7">7月</option>
+                                <option value="8">8月</option>
+                                <option value="9">9月</option>
+                                <option value="10">10月</option>
+                                <option value="11">11月</option>
+                                <option value="12">12月</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- クライアント別時間サマリー -->
+                    <div id="client-monthly-summary" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
+                    </div>
+                    
+                    <!-- 詳細テーブル -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">クライアント</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">タスク名</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">作業時間</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">セッション数</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最終更新</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monthly-report-table" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1095,7 +1142,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-gray-700">カレンダー同期</label>
-                                <p class="text-sm text-gray-500">タスクの期限をGoogle Calendarと同期します</p>
+                                <p class="text-sm text-gray-500">タスクをGoogle Calendar・Tasksと同期します（予定開始日時設定済みタスクのみ）</p>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="calendar-sync-toggle" class="sr-only">
@@ -1110,7 +1157,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Google Calendar API Key</label>
                                 <input type="text" id="google-api-key" placeholder="AIzaSyC..." 
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <p class="text-xs text-gray-500 mt-1">Google Cloud ConsoleでCalendar APIを有効化し、APIキーを取得してください</p>
+                                <p class="text-xs text-gray-500 mt-1">Google Cloud ConsoleでCalendar API・Tasks APIを有効化し、APIキーを取得してください</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Google Client ID</label>
@@ -1135,7 +1182,24 @@
                                     タスクを同期
                                 </button>
                             </div>
-                            <div id="calendar-status" class="text-sm"></div>
+                            
+                            <!-- 自動同期設定 -->
+                            <div class="mt-4 p-3 bg-gray-50 rounded-md">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">自動同期</label>
+                                        <p class="text-xs text-gray-500">タスクの変更時に自動的にカレンダーと同期します</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="auto-sync-toggle" class="sr-only" checked>
+                                        <div class="w-9 h-5 bg-gray-200 rounded-full relative">
+                                            <div class="dot absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition transform translate-x-4 bg-blue-600"></div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div id="calendar-status" class="text-sm mt-2"></div>
                         </div>
                     </div>
                 </div>
@@ -1255,6 +1319,15 @@
                         </button>
                     </div>
                     <div id="subtasks-container"></div>
+                </div>
+                
+                <!-- 時間ログ -->
+                <div id="time-logs-section" class="hidden">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-medium text-gray-700">作業時間ログ</label>
+                        <span class="text-sm text-gray-500">合計: <span id="total-hours-display">0.0</span>時間</span>
+                    </div>
+                    <div id="time-logs-container" class="space-y-2 max-h-48 overflow-y-auto"></div>
                 </div>
                 
                 <div class="flex justify-end space-x-3 pt-4 border-t">
@@ -2683,6 +2756,16 @@
                 document.getElementById('test-calendar-connection').addEventListener('click', () => this.testCalendarConnection());
                 document.getElementById('sync-tasks-to-calendar').addEventListener('click', () => this.syncTasksToCalendar());
                 
+                // 自動同期トグル
+                document.getElementById('auto-sync-toggle').addEventListener('change', (e) => {
+                    this.saveSettings();
+                    if (e.target.checked) {
+                        console.log('✅ 自動同期が有効になりました');
+                    } else {
+                        console.log('❌ 自動同期が無効になりました');
+                    }
+                });
+                
                 // データ管理
                 document.getElementById('export-data-btn').addEventListener('click', () => this.exportData());
                 document.getElementById('import-data-btn').addEventListener('click', () => document.getElementById('import-file-input').click());
@@ -2737,6 +2820,33 @@
             generateId() {
                 return Date.now().toString(36) + Math.random().toString(36).substr(2);
             }
+            
+            // 時間フォーマット用ユーティリティ
+            formatHoursToHHMM(hours) {
+                if (isNaN(hours) || hours < 0) return '0:00';
+                
+                const totalMinutes = Math.round(hours * 60);
+                const h = Math.floor(totalMinutes / 60);
+                const m = totalMinutes % 60;
+                
+                return `${h}:${m.toString().padStart(2, '0')}`;
+            }
+            
+            formatHoursToReadable(hours) {
+                if (isNaN(hours) || hours < 0) return '0時間0分';
+                
+                const totalMinutes = Math.round(hours * 60);
+                const h = Math.floor(totalMinutes / 60);
+                const m = totalMinutes % 60;
+                
+                if (h > 0 && m > 0) {
+                    return `${h}時間${m}分`;
+                } else if (h > 0) {
+                    return `${h}時間`;
+                } else {
+                    return `${m}分`;
+                }
+            }
 
             linkifyText(text) {
                 // URL検出のための正規表現
@@ -2768,6 +2878,7 @@
             saveSettings() {
                 const settings = {
                     calendarSync: document.getElementById('calendar-sync-toggle').checked,
+                    autoSync: document.getElementById('auto-sync-toggle').checked,
                     calendarId: document.getElementById('calendar-id').value,
                     googleApiKey: document.getElementById('google-api-key').value,
                     googleClientId: document.getElementById('google-client-id').value,
@@ -2821,6 +2932,12 @@
                 if (this.settings.desktopNotifications) {
                     document.getElementById('desktop-notifications-toggle').checked = true;
                 }
+                if (this.settings.autoSync !== undefined) {
+                    document.getElementById('auto-sync-toggle').checked = this.settings.autoSync;
+                } else {
+                    // デフォルトで自動同期を有効に
+                    document.getElementById('auto-sync-toggle').checked = true;
+                }
                 
                 // Google Calendar APIの初期化
                 if (this.settings.googleApiKey && this.settings.googleClientId) {
@@ -2839,13 +2956,16 @@
                 
                 if (task) {
                     title.textContent = 'タスクを編集';
+                    // 先に顧客選択肢を作成（現在選択されている顧客IDを渡す）
+                    this.populateClientSelect(task.client_id);
                     this.populateTaskForm(task);
                 } else {
                     title.textContent = '新しいタスク';
                     document.getElementById('task-form').reset();
+                    // 新規作成時は通常の顧客選択肢を作成
+                    this.populateClientSelect();
                 }
                 
-                this.populateClientSelect();
                 modal.classList.remove('hidden');
             }
             
@@ -2864,9 +2984,12 @@
                     const localScheduled = new Date(task.scheduled_date);
                     localScheduled.setMinutes(localScheduled.getMinutes() - localScheduled.getTimezoneOffset());
                     document.getElementById('task-scheduled').value = localScheduled.toISOString().slice(0, 16);
+                } else {
+                    document.getElementById('task-scheduled').value = '';
                 }
                 
                 document.getElementById('task-description').value = task.description || '';
+                // 顧客選択（二重保証のため再設定）
                 document.getElementById('task-client').value = task.client_id || '';
                 document.getElementById('task-estimated-hours').value = task.estimated_hours || '';
                 
@@ -2877,16 +3000,80 @@
                     console.log(`サブタスク追加: ${subtask.title} (parent: ${subtask.parent_task_id})`);
                     this.addSubtaskInput(subtask.title, subtask.completed, subtask.deadline);
                 });
+                
+                // 時間ログを表示
+                this.displayTimeLogs(task);
             }
             
-            populateClientSelect() {
+            displayTimeLogs(task) {
+                const timeLogsSection = document.getElementById('time-logs-section');
+                const timeLogsContainer = document.getElementById('time-logs-container');
+                const totalHoursDisplay = document.getElementById('total-hours-display');
+                
+                // 時間ログがある場合のみセクションを表示
+                const timeSessions = task.time_sessions || [];
+                
+                if (timeSessions.length > 0) {
+                    timeLogsSection.classList.remove('hidden');
+                    
+                    // 合計時間を計算
+                    const totalHours = timeSessions.reduce((sum, session) => sum + (session.hours || 0), 0);
+                    totalHoursDisplay.textContent = this.formatHoursToReadable(totalHours);
+                    
+                    // ログを表示
+                    timeLogsContainer.innerHTML = '';
+                    timeSessions.forEach(session => {
+                        const logDiv = document.createElement('div');
+                        logDiv.className = 'bg-gray-50 rounded-lg p-3 border';
+                        
+                        const startDate = new Date(session.start_time);
+                        const endDate = new Date(session.end_time);
+                        
+                        logDiv.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="text-sm text-gray-600">
+                                        ${startDate.toLocaleDateString('ja-JP')} 
+                                        ${startDate.toLocaleTimeString('ja-JP', {hour: '2-digit', minute: '2-digit'})} - 
+                                        ${endDate.toLocaleTimeString('ja-JP', {hour: '2-digit', minute: '2-digit'})}
+                                    </div>
+                                    <div class="text-sm font-medium text-gray-800">
+                                        ${this.formatHoursToReadable(session.hours)}
+                                        ${session.action === 'pause' ? '(一時停止)' : ''}
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button onclick="app.editTimeLog('${session.id}', '${task.id}')" 
+                                            class="text-blue-600 hover:text-blue-700 text-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="app.deleteTimeLog('${session.id}', '${task.id}')" 
+                                            class="text-red-600 hover:text-red-700 text-sm">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        timeLogsContainer.appendChild(logDiv);
+                    });
+                } else {
+                    timeLogsSection.classList.add('hidden');
+                }
+            }
+            
+            populateClientSelect(selectedClientId = null) {
                 const select = document.getElementById('task-client');
+                const currentValue = selectedClientId || select.value;
                 select.innerHTML = '<option value="">顧客を選択</option>';
                 
                 this.clients.forEach(client => {
                     const option = document.createElement('option');
                     option.value = client.id;
                     option.textContent = `${client.name}${client.company ? ` (${client.company})` : ''}`;
+                    if (client.id === currentValue) {
+                        option.selected = true;
+                    }
                     select.appendChild(option);
                 });
             }
@@ -2987,6 +3174,9 @@
                 if (this.currentTab === 'gantt') {
                     this.renderGanttChart();
                 }
+                
+                // 自動同期を実行
+                this.autoSyncToCalendar(taskData.id);
             }
             
             deleteTask(taskId) {
@@ -3000,6 +3190,9 @@
                     if (this.currentTab === 'gantt') {
                         this.renderGanttChart();
                     }
+                    
+                    // 自動同期を実行（削除されたタスクのクリーンアップも含む）
+                    this.autoSyncToCalendar();
                 }
             }
             
@@ -3018,52 +3211,246 @@
                     if (this.currentTab === 'gantt') {
                         this.renderGanttChart();
                     }
+                    
+                    // 自動同期を実行（完了状態の変更を反映）
+                    this.autoSyncToCalendar(taskId);
                 }
             }
             
-            // 時間追跡機能
+            // 時間追跡機能（拡張版：開始・停止・中断・再開）
             toggleTimer(taskId) {
                 const task = this.tasks.find(t => t.id === taskId);
                 if (!task) return;
                 
-                if (task.is_timing) {
-                    // タイマー停止
-                    const elapsedHours = (Date.now() - new Date(task.current_timer_start).getTime()) / (1000 * 60 * 60);
-                    task.actual_hours = (task.actual_hours || 0) + elapsedHours;
-                    task.is_timing = false;
-                    task.current_timer_start = null;
-                    
-                    // 時間ログ記録
-                    this.timeLogs.push({
-                        id: this.generateId(),
-                        task_id: taskId,
-                        start_time: task.current_timer_start,
-                        end_time: new Date().toISOString(),
-                        hours: elapsedHours,
-                        created_at: new Date().toISOString()
-                    });
+                // タイマー状態の初期化
+                if (!task.timer_state) {
+                    task.timer_state = 'stopped'; // stopped, running, paused
+                }
+                if (!task.time_sessions) {
+                    task.time_sessions = [];
+                }
+                
+                if (task.timer_state === 'running') {
+                    // 実行中→停止
+                    this.stopTimer(taskId);
+                } else if (task.timer_state === 'paused') {
+                    // 一時停止中→再開
+                    this.resumeTimer(taskId);
                 } else {
-                    // 他のタスクのタイマーを停止
-                    this.tasks.forEach(t => {
-                        if (t.is_timing) {
-                            const elapsedHours = (Date.now() - new Date(t.current_timer_start).getTime()) / (1000 * 60 * 60);
-                            t.actual_hours = (t.actual_hours || 0) + elapsedHours;
-                            t.is_timing = false;
-                            t.current_timer_start = null;
-                        }
-                    });
-                    
-                    // タイマー開始
-                    task.is_timing = true;
-                    task.current_timer_start = new Date().toISOString();
-                    if (task.status === 'pending') {
-                        task.status = 'in_progress';
+                    // 停止中→開始
+                    this.startTimer(taskId);
+                }
+            }
+            
+            startTimer(taskId) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (!task) return;
+                
+                // 他のタスクのタイマーを停止
+                this.tasks.forEach(t => {
+                    if (t.timer_state === 'running' && t.id !== taskId) {
+                        this.pauseTimer(t.id);
                     }
+                });
+                
+                task.timer_state = 'running';
+                task.current_timer_start = new Date().toISOString();
+                task.is_timing = true;
+                
+                if (task.status === 'pending') {
+                    task.status = 'in_progress';
                 }
                 
                 task.updated_at = new Date().toISOString();
                 this.saveData();
                 this.renderTasks();
+            }
+            
+            stopTimer(taskId) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (!task || (task.timer_state !== 'running' && task.timer_state !== 'paused')) return;
+                
+                // paused状態から停止する場合は、追加の時間記録は不要（既にpauseで記録済み）
+                if (task.timer_state === 'running') {
+                    const startTime = new Date(task.current_timer_start);
+                    const endTime = new Date();
+                    const elapsedHours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+                    
+                    // 実績時間に追加
+                    task.actual_hours = (task.actual_hours || 0) + elapsedHours;
+                    
+                    // 時間セッションログ記録
+                    const session = {
+                        id: this.generateId(),
+                        task_id: taskId,
+                        start_time: startTime.toISOString(),
+                        end_time: endTime.toISOString(),
+                        hours: elapsedHours,
+                        action: 'stop',
+                        created_at: new Date().toISOString(),
+                        editable: true
+                    };
+                    
+                    if (!task.time_sessions) task.time_sessions = [];
+                    task.time_sessions.push(session);
+                    
+                    // 下位互換性のため従来のtimeLogsも更新
+                    this.timeLogs.push({
+                        id: session.id,
+                        task_id: taskId,
+                        start_time: session.start_time,
+                        end_time: session.end_time,
+                        hours: elapsedHours,
+                        created_at: session.created_at
+                    });
+                }
+                
+                // 状態をリセット
+                task.timer_state = 'stopped';
+                task.is_timing = false;
+                task.current_timer_start = null;
+                task.updated_at = new Date().toISOString();
+                this.saveData();
+                this.renderTasks();
+            }
+            
+            pauseTimer(taskId) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (!task || task.timer_state !== 'running') return;
+                
+                const startTime = new Date(task.current_timer_start);
+                const pauseTime = new Date();
+                const elapsedHours = (pauseTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+                
+                // 実績時間に追加
+                task.actual_hours = (task.actual_hours || 0) + elapsedHours;
+                task.timer_state = 'paused';
+                task.is_timing = false;
+                
+                // 一時停止セッション記録
+                const session = {
+                    id: this.generateId(),
+                    task_id: taskId,
+                    start_time: startTime.toISOString(),
+                    end_time: pauseTime.toISOString(),
+                    hours: elapsedHours,
+                    action: 'pause',
+                    created_at: new Date().toISOString(),
+                    editable: true
+                };
+                
+                if (!task.time_sessions) task.time_sessions = [];
+                task.time_sessions.push(session);
+                
+                task.current_timer_start = null;
+                task.updated_at = new Date().toISOString();
+                this.saveData();
+                this.renderTasks();
+            }
+            
+            resumeTimer(taskId) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (!task || task.timer_state !== 'paused') return;
+                
+                // 他のタスクのタイマーを停止
+                this.tasks.forEach(t => {
+                    if (t.timer_state === 'running' && t.id !== taskId) {
+                        this.pauseTimer(t.id);
+                    }
+                });
+                
+                task.timer_state = 'running';
+                task.current_timer_start = new Date().toISOString();
+                task.is_timing = true;
+                
+                task.updated_at = new Date().toISOString();
+                this.saveData();
+                this.renderTasks();
+            }
+            
+            editTimeLog(sessionId, taskId) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (!task || !task.time_sessions) return;
+                
+                const session = task.time_sessions.find(s => s.id === sessionId);
+                if (!session) return;
+                
+                const startTime = new Date(session.start_time);
+                const endTime = new Date(session.end_time);
+                
+                const newStartTime = prompt('開始時刻を入力してください (YYYY-MM-DD HH:MM)', 
+                    startTime.toISOString().slice(0, 16).replace('T', ' '));
+                
+                if (newStartTime && newStartTime !== startTime.toISOString().slice(0, 16).replace('T', ' ')) {
+                    const newEndTime = prompt('終了時刻を入力してください (YYYY-MM-DD HH:MM)', 
+                        endTime.toISOString().slice(0, 16).replace('T', ' '));
+                    
+                    if (newEndTime) {
+                        const newStart = new Date(newStartTime.replace(' ', 'T'));
+                        const newEnd = new Date(newEndTime.replace(' ', 'T'));
+                        
+                        if (newStart < newEnd) {
+                            const oldHours = session.hours;
+                            const newHours = (newEnd.getTime() - newStart.getTime()) / (1000 * 60 * 60);
+                            
+                            // 実績時間を調整
+                            task.actual_hours = (task.actual_hours || 0) - oldHours + newHours;
+                            
+                            // セッションを更新
+                            session.start_time = newStart.toISOString();
+                            session.end_time = newEnd.toISOString();
+                            session.hours = newHours;
+                            session.updated_at = new Date().toISOString();
+                            
+                            task.updated_at = new Date().toISOString();
+                            this.saveData();
+                            
+                            // モーダルが開いている場合は再表示
+                            if (this.currentEditingTask && this.currentEditingTask.id === taskId) {
+                                this.displayTimeLogs(task);
+                            }
+                            
+                            this.renderTasks();
+                        } else {
+                            alert('終了時刻は開始時刻より後にしてください。');
+                        }
+                    }
+                }
+            }
+            
+            deleteTimeLog(sessionId, taskId) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (!task || !task.time_sessions) return;
+                
+                const sessionIndex = task.time_sessions.findIndex(s => s.id === sessionId);
+                if (sessionIndex === -1) return;
+                
+                if (confirm('この作業ログを削除しますか？')) {
+                    const session = task.time_sessions[sessionIndex];
+                    
+                    // 実績時間から削除
+                    task.actual_hours = (task.actual_hours || 0) - (session.hours || 0);
+                    if (task.actual_hours < 0) task.actual_hours = 0;
+                    
+                    // セッションを削除
+                    task.time_sessions.splice(sessionIndex, 1);
+                    
+                    // 下位互換性のためtimeLogsからも削除
+                    const timeLogIndex = this.timeLogs.findIndex(log => log.id === sessionId);
+                    if (timeLogIndex !== -1) {
+                        this.timeLogs.splice(timeLogIndex, 1);
+                    }
+                    
+                    task.updated_at = new Date().toISOString();
+                    this.saveData();
+                    
+                    // モーダルが開いている場合は再表示
+                    if (this.currentEditingTask && this.currentEditingTask.id === taskId) {
+                        this.displayTimeLogs(task);
+                    }
+                    
+                    this.renderTasks();
+                }
             }
             
             startTimerUpdates() {
@@ -3091,10 +3478,14 @@
                 // ステータスフィルターに新しいオプションを追加
                 this.updateStatusFilterOptions();
                 
+                // 顧客フィルターを初期化
+                this.updateTaskClientFilter();
+                
                 // 既存のイベントリスナーを設定
                 const searchInput = document.getElementById('search-input');
                 const filterStatus = document.getElementById('filter-status');
                 const filterPriority = document.getElementById('filter-priority');
+                const filterClient = document.getElementById('filter-client');
                 
                 if (searchInput) {
                     searchInput.addEventListener('input', () => this.renderTasks());
@@ -3107,6 +3498,12 @@
                 }
                 if (filterPriority) {
                     filterPriority.addEventListener('change', () => this.renderTasks());
+                }
+                if (filterClient) {
+                    filterClient.addEventListener('change', () => {
+                        console.log('🔍 顧客フィルター変更:', filterClient.value);
+                        this.renderTasks();
+                    });
                 }
                 
                 console.log('✅ タスクフィルターを初期化しました');
@@ -3134,11 +3531,42 @@
                 console.log('🔄 ステータスフィルターのオプションを更新しました');
             }
             
+            updateTaskClientFilter() {
+                const filterClient = document.getElementById('filter-client');
+                if (!filterClient) return;
+                
+                // 現在の選択値を保存
+                const currentValue = filterClient.value;
+                
+                // オプションをクリアして基本オプションを追加
+                filterClient.innerHTML = '<option value="">全顧客</option>';
+                
+                // 顧客リストを取得してオプションに追加
+                this.clients.forEach(client => {
+                    const option = document.createElement('option');
+                    option.value = client.id;
+                    option.textContent = `${client.name}${client.company ? ` (${client.company})` : ''}`;
+                    filterClient.appendChild(option);
+                });
+                
+                // 「顧客未指定」オプションを追加
+                const unspecifiedOption = document.createElement('option');
+                unspecifiedOption.value = 'unspecified';
+                unspecifiedOption.textContent = '顧客未指定';
+                filterClient.appendChild(unspecifiedOption);
+                
+                // 前の選択値を復元
+                filterClient.value = currentValue;
+                
+                console.log('🔄 顧客フィルターのオプションを更新しました');
+            }
+            
             renderTasks() {
                 const container = document.getElementById('tasks-container');
                 const searchTerm = document.getElementById('search-input').value.toLowerCase();
                 const statusFilter = document.getElementById('filter-status').value;
                 const priorityFilter = document.getElementById('filter-priority').value;
+                const clientFilter = document.getElementById('filter-client').value;
                 
                 let filteredTasks = this.tasks.filter(task => {
                     const matchSearch = task.title.toLowerCase().includes(searchTerm) || 
@@ -3158,7 +3586,19 @@
                     
                     const matchPriority = !priorityFilter || task.priority === priorityFilter;
                     
-                    return matchSearch && matchStatus && matchPriority;
+                    // 顧客フィルターの処理
+                    let matchClient = true;
+                    if (clientFilter) {
+                        if (clientFilter === 'unspecified') {
+                            // 顧客未指定
+                            matchClient = !task.client_id;
+                        } else {
+                            // 指定された顧客
+                            matchClient = task.client_id === clientFilter;
+                        }
+                    }
+                    
+                    return matchSearch && matchStatus && matchPriority && matchClient;
                 });
                 
                 // 期限と優先度でソート
@@ -3252,7 +3692,6 @@
                                     onclick="app.toggleTaskStatus('${task.id}')"></button>
                             <div class="flex-1 min-w-0">
                                 <h3 class="text-lg font-semibold text-gray-900 truncate ${task.status === 'completed' ? 'line-through' : ''}">${task.title}</h3>
-                                ${task.description ? `<p class="text-gray-600 text-sm mt-1 break-words line-clamp-2 overflow-hidden">${this.linkifyText(task.description)}</p>` : ''}
                                 ${client ? `<p class="text-blue-600 text-sm mt-1"><i class="fas fa-user mr-1"></i>${client.name}${client.company ? ` (${client.company})` : ''}</p>` : ''}
                                 
                                 <div class="flex flex-wrap items-center gap-2 mt-3">
@@ -3267,12 +3706,12 @@
                                     </span>
                                     ${task.estimated_hours > 0 ? `
                                         <span class="text-xs text-gray-600">
-                                            <i class="fas fa-clock mr-1"></i>予想: ${task.estimated_hours}h
+                                            <i class="fas fa-clock mr-1"></i>予想: ${this.formatHoursToReadable(task.estimated_hours)}
                                         </span>
                                     ` : ''}
                                     ${task.actual_hours > 0 ? `
                                         <span class="text-xs text-gray-600">
-                                            <i class="fas fa-hourglass-half mr-1"></i>実績: ${task.actual_hours.toFixed(1)}h
+                                            <i class="fas fa-hourglass-half mr-1"></i>実績: ${this.formatHoursToReadable(task.actual_hours)}
                                         </span>
                                     ` : ''}
                                     ${currentTime}
@@ -3292,10 +3731,7 @@
                         </div>
                         
                         <div class="flex items-center space-x-2 ml-4">
-                            <button class="timer-btn p-2 rounded-lg border border-gray-300 hover:bg-gray-50 ${task.is_timing ? 'running' : ''}"
-                                    onclick="app.toggleTimer('${task.id}')" title="${task.is_timing ? 'タイマー停止' : 'タイマー開始'}">
-                                <i class="fas ${task.is_timing ? 'fa-stop' : 'fa-play'} text-sm"></i>
-                            </button>
+                            ${this.renderTimerButtons(task)}
                             <button class="p-2 rounded-lg border border-gray-300 hover:bg-gray-50"
                                     onclick="app.openTaskModal(app.tasks.find(t => t.id === '${task.id}'))" title="編集">
                                 <i class="fas fa-edit text-sm text-gray-600"></i>
@@ -3309,6 +3745,50 @@
                 `;
                 
                 return card;
+            }
+            
+            renderTimerButtons(task) {
+                if (!task.timer_state) {
+                    task.timer_state = 'stopped';
+                }
+                
+                let buttons = '';
+                
+                if (task.timer_state === 'running') {
+                    // 実行中：停止と一時停止ボタン
+                    buttons = `
+                        <button class="timer-btn p-2 rounded-lg border border-gray-300 hover:bg-gray-50 running"
+                                onclick="app.toggleTimer('${task.id}')" title="タイマー停止">
+                            <i class="fas fa-stop text-sm text-red-600"></i>
+                        </button>
+                        <button class="p-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+                                onclick="app.pauseTimer('${task.id}')" title="一時停止">
+                            <i class="fas fa-pause text-sm text-orange-600"></i>
+                        </button>
+                    `;
+                } else if (task.timer_state === 'paused') {
+                    // 一時停止中：再開と停止ボタン
+                    buttons = `
+                        <button class="timer-btn p-2 rounded-lg border border-gray-300 hover:bg-gray-50 paused"
+                                onclick="app.toggleTimer('${task.id}')" title="再開">
+                            <i class="fas fa-play text-sm text-green-600"></i>
+                        </button>
+                        <button class="p-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+                                onclick="app.stopTimer('${task.id}')" title="停止">
+                            <i class="fas fa-stop text-sm text-red-600"></i>
+                        </button>
+                    `;
+                } else {
+                    // 停止中：開始ボタンのみ
+                    buttons = `
+                        <button class="timer-btn p-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+                                onclick="app.toggleTimer('${task.id}')" title="タイマー開始">
+                            <i class="fas fa-play text-sm text-blue-600"></i>
+                        </button>
+                    `;
+                }
+                
+                return buttons;
             }
             
             // ガントチャート機能
@@ -3483,8 +3963,12 @@
             }
             
             updateAllClientFilters() {
-                // タスクモーダルの顧客選択を更新
-                this.populateClientSelect();
+                // タスクモーダルの顧客選択を更新（現在値を保持）
+                const currentClientValue = document.getElementById('task-client')?.value;
+                this.populateClientSelect(currentClientValue);
+                
+                // タスクページの顧客フィルターを更新
+                this.updateTaskClientFilter();
                 
                 // ガントチャートの顧客フィルターを更新
                 this.populateGanttClientFilter();
@@ -3704,22 +4188,31 @@
                             const priorityClass = task.priority === 'high' ? 'high-priority' : '';
                             const completedClass = task.status === 'completed' ? 'completed' : '';
                             
-                            // タスクバーの表示内容を決定
+                            // タスクバーの表示内容と角丸スタイルを決定
                             let barContent = '';
+                            let borderRadiusStyle = '';
+                            
                             if (isStart && isEnd) {
-                                // 1日だけのタスク
+                                // 1日だけのタスク - 両端角丸
                                 barContent = task.title.substring(0, 4) + (task.title.length > 4 ? '..' : '');
+                                borderRadiusStyle = 'border-radius: 3px;';
                             } else if (isStart) {
-                                // 開始日
+                                // 開始日 - 左端のみ角丸
                                 barContent = task.title.substring(0, 3) + (task.title.length > 3 ? '..' : '');
+                                borderRadiusStyle = 'border-top-left-radius: 3px; border-bottom-left-radius: 3px;';
                             } else if (isEnd) {
-                                // 終了日
+                                // 終了日 - 右端のみ角丸
                                 barContent = '▶';
+                                borderRadiusStyle = 'border-top-right-radius: 3px; border-bottom-right-radius: 3px;';
+                            } else {
+                                // 中間日 - 角丸なし
+                                barContent = '';
                             }
                             
                             ganttHTML += `
                                 <div class="gantt-day-column" style="min-width: 40px; width: 40px; max-width: 40px; flex: 0 0 40px; padding: 0; box-sizing: border-box; border-right: 1px solid #e5e7eb;">
                                     <div class="gantt-task-bar ${priorityClass} ${completedClass}" 
+                                         style="${borderRadiusStyle}"
                                          title="${task.title} (開始: ${startDateOnly.toLocaleDateString()}, 終了: ${endDateOnly.toLocaleDateString()})" 
                                          onclick="app.openTaskModal(app.tasks.find(t => t.id === '${task.id}'))">
                                         ${barContent}
@@ -3741,27 +4234,39 @@
                             const currentDate = new Date(year, month, day);
                             
                             if (subtask.deadline) {
-                                const subtaskDate = new Date(subtask.deadline);
-                                const subtaskDateOnly = new Date(subtaskDate.getFullYear(), subtaskDate.getMonth(), subtaskDate.getDate());
-                                const isSubtaskDay = currentDate.getTime() === subtaskDateOnly.getTime();
+                                // 日付文字列の正確なパース（タイムゾーンの影響を避ける）
+                                const deadlineParts = subtask.deadline.split('-');
+                                if (deadlineParts.length === 3) {
+                                    const subtaskYear = parseInt(deadlineParts[0]);
+                                    const subtaskMonth = parseInt(deadlineParts[1]) - 1; // 月は0ベース
+                                    const subtaskDay = parseInt(deadlineParts[2]);
+                                    const subtaskDateOnly = new Date(subtaskYear, subtaskMonth, subtaskDay);
+                                    
+                                    const currentDateOnly = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+                                    const isSubtaskDay = currentDateOnly.getTime() === subtaskDateOnly.getTime();
                                 
-                                // デバッグ: ストライプタスクの日付確認
-                                if (subtask.title.includes('ストライプ') && (day === 17 || day === 18)) {
-                                    console.log(`🔴 サブタスク "${subtask.title}" - ${day}日目`);
-                                    console.log(`  現在の日付: ${currentDate.toISOString().split('T')[0]}`);
-                                    console.log(`  期限日: ${subtaskDateOnly.toISOString().split('T')[0]}`);
-                                    console.log(`  プロット対象?: ${isSubtaskDay}`);
-                                }
-                                
-                                if (isSubtaskDay) {
-                                    ganttHTML += `
-                                        <div class="gantt-day-column" style="min-width: 40px; width: 40px; max-width: 40px; flex: 0 0 40px; padding: 0; box-sizing: border-box; border-right: 1px solid #e5e7eb;">
-                                            <div class="gantt-subtask-bar ${subtask.completed ? 'completed' : ''}" 
-                                                 title="${subtask.title} (期限: ${subtaskDateOnly.toLocaleDateString()})">
-                                                ${subtask.title.substring(0, 3) + (subtask.title.length > 3 ? '..' : '')}
+                                    // デバッグ: サブタスクの日付確認
+                                    if (subtask.title.includes('ストライプ') && (day === 16 || day === 17 || day === 18)) {
+                                        console.log(`🔴 サブタスク "${subtask.title}" - ${day}日目`);
+                                        console.log(`  現在の日付: ${currentDateOnly.toISOString().split('T')[0]}`);
+                                        console.log(`  期限日: ${subtaskDateOnly.toISOString().split('T')[0]}`);
+                                        console.log(`  プロット対象?: ${isSubtaskDay}`);
+                                        console.log(`  期限文字列: ${subtask.deadline}`);
+                                        console.log(`  パース結果: ${subtaskYear}/${subtaskMonth + 1}/${subtaskDay}`);
+                                    }
+                                    
+                                    if (isSubtaskDay) {
+                                        ganttHTML += `
+                                            <div class="gantt-day-column" style="min-width: 40px; width: 40px; max-width: 40px; flex: 0 0 40px; padding: 0; box-sizing: border-box; border-right: 1px solid #e5e7eb;">
+                                                <div class="gantt-subtask-bar ${subtask.completed ? 'completed' : ''}" 
+                                                     title="${subtask.title} (期限: ${subtaskDateOnly.toLocaleDateString()})">
+                                                    ${subtask.title.substring(0, 3) + (subtask.title.length > 3 ? '..' : '')}
+                                                </div>
                                             </div>
-                                        </div>
-                                    `;
+                                        `;
+                                    } else {
+                                        ganttHTML += `<div class="gantt-day-column" style="min-width: 40px; width: 40px; max-width: 40px; flex: 0 0 40px; padding: 0; box-sizing: border-box; border-right: 1px solid #e5e7eb;"></div>`;
+                                    }
                                 } else {
                                     ganttHTML += `<div class="gantt-day-column" style="min-width: 40px; width: 40px; max-width: 40px; flex: 0 0 40px; padding: 0; box-sizing: border-box; border-right: 1px solid #e5e7eb;"></div>`;
                                 }
@@ -3785,23 +4290,7 @@
                 // スクロール連動を設定
                 this.setupGanttScrollSync();
                 
-                // デバッグ: 位置関係の確認用マーカーを追加
-                setTimeout(() => {
-                    const leftHeader = document.querySelector('.gantt-fixed-column .gantt-header-row');
-                    const firstDateColumn = document.querySelector('.gantt-scrollable-wrapper .gantt-day-column:first-child');
-                    
-                    if (leftHeader) {
-                        leftHeader.style.borderRight = '3px solid #ef4444'; // 赤いボーダー
-                    }
-                    if (firstDateColumn) {
-                        firstDateColumn.style.borderLeft = '3px solid #10b981'; // 緑のボーダー
-                    }
-                    
-                    console.log('🎯 位置確認マーカーを設定しました');
-                    console.log('赤いボーダー: 左側タスクリストの右端');
-                    console.log('緑のボーダー: 右側プロットエリアの左端');
-                    console.log('この2つのボーダーが一直線上にないとずれています');
-                }, 100);
+
             }
 
             setupGanttScrollSync() {
@@ -3933,77 +4422,73 @@
             }
             
             renderClients() {
-                const container = document.getElementById('clients-container');
+                const tableBody = document.getElementById('clients-table-body');
+                const emptyState = document.getElementById('clients-empty-state');
                 
                 if (this.clients.length === 0) {
-                    container.innerHTML = `
-                        <div class="col-span-full text-center py-12 text-gray-500">
-                            <i class="fas fa-users text-4xl mb-4"></i>
-                            <p class="text-lg">顧客がまだ登録されていません</p>
-                            <p class="text-sm">新しい顧客を追加してみましょう</p>
-                        </div>
-                    `;
+                    tableBody.innerHTML = '';
+                    emptyState.classList.remove('hidden');
                     return;
                 }
                 
-                container.innerHTML = '';
+                emptyState.classList.add('hidden');
+                tableBody.innerHTML = '';
                 
                 this.clients.forEach(client => {
                     const clientTasks = this.tasks.filter(t => t.client_id === client.id);
                     const completedTasks = clientTasks.filter(t => t.status === 'completed');
                     const totalHours = clientTasks.reduce((sum, task) => sum + (task.actual_hours || 0), 0);
                     
-                    const card = document.createElement('div');
-                    card.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow';
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50 transition-colors';
                     
-                    card.innerHTML = `
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="flex-1">
-                                <h3 class="text-lg font-semibold text-gray-900">${client.name}</h3>
-                                ${client.company ? `<p class="text-gray-600 text-sm">${client.company}</p>` : ''}
+                    const contactInfo = [];
+                    if (client.email) contactInfo.push(`<div class="text-xs text-gray-600"><i class="fas fa-envelope mr-1"></i>${client.email}</div>`);
+                    if (client.phone) contactInfo.push(`<div class="text-xs text-gray-600"><i class="fas fa-phone mr-1"></i>${client.phone}</div>`);
+                    
+                    row.innerHTML = `
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-gray-900">${client.name}</div>
+                            ${client.notes ? `<div class="text-xs text-gray-500 mt-1 truncate" title="${client.notes}">${client.notes}</div>` : ''}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="text-sm text-gray-900">${client.company || '-'}</div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="space-y-1">
+                                ${contactInfo.join('') || '<span class="text-gray-400 text-xs">-</span>'}
                             </div>
-                            <div class="flex space-x-2">
-                                <button class="p-2 rounded-lg border border-gray-300 hover:bg-gray-50"
-                                        onclick="app.openClientModal(app.clients.find(c => c.id === '${client.id}'))" title="編集">
-                                    <i class="fas fa-edit text-sm text-gray-600"></i>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                ${clientTasks.length}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                ${completedTasks.length}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="text-sm font-medium text-gray-900">${this.formatHoursToHHMM(totalHours)}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex justify-center space-x-1">
+                                <button class="p-1.5 rounded-md border border-gray-300 hover:bg-gray-50 transition-colors"
+                                        onclick="app.openClientModal(app.clients.find(c => c.id === '${client.id}'))" 
+                                        title="編集">
+                                    <i class="fas fa-edit text-xs text-gray-600"></i>
                                 </button>
-                                <button class="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-red-600"
-                                        onclick="app.deleteClient('${client.id}')" title="削除">
-                                    <i class="fas fa-trash text-sm"></i>
+                                <button class="p-1.5 rounded-md border border-gray-300 hover:bg-red-50 transition-colors text-red-600"
+                                        onclick="app.deleteClient('${client.id}')" 
+                                        title="削除">
+                                    <i class="fas fa-trash text-xs"></i>
                                 </button>
                             </div>
-                        </div>
-                        
-                        <div class="space-y-2 text-sm text-gray-600">
-                            ${client.email ? `<div><i class="fas fa-envelope mr-2"></i>${client.email}</div>` : ''}
-                            ${client.phone ? `<div><i class="fas fa-phone mr-2"></i>${client.phone}</div>` : ''}
-                        </div>
-                        
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                            <div class="grid grid-cols-3 gap-4 text-center">
-                                <div>
-                                    <div class="text-2xl font-bold text-blue-600">${clientTasks.length}</div>
-                                    <div class="text-xs text-gray-500">総タスク</div>
-                                </div>
-                                <div>
-                                    <div class="text-2xl font-bold text-green-600">${completedTasks.length}</div>
-                                    <div class="text-xs text-gray-500">完了済み</div>
-                                </div>
-                                <div>
-                                    <div class="text-2xl font-bold text-purple-600">${totalHours.toFixed(1)}h</div>
-                                    <div class="text-xs text-gray-500">作業時間</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        ${client.notes ? `
-                            <div class="mt-4 pt-4 border-t border-gray-200">
-                                <p class="text-sm text-gray-600">${client.notes}</p>
-                            </div>
-                        ` : ''}
+                        </td>
                     `;
                     
-                    container.appendChild(card);
+                    tableBody.appendChild(row);
                 });
             }
             
@@ -4011,6 +4496,7 @@
             renderReports() {
                 this.updateReportStats();
                 this.renderCharts();
+                this.initializeMonthlyReport();
             }
             
             updateReportStats() {
@@ -4021,7 +4507,7 @@
                 
                 document.getElementById('total-tasks').textContent = totalTasks;
                 document.getElementById('completed-tasks').textContent = completedTasks;
-                document.getElementById('total-hours').textContent = `${totalHours.toFixed(1)}h`;
+                document.getElementById('total-hours').textContent = this.formatHoursToReadable(totalHours);
                 document.getElementById('total-clients').textContent = totalClients;
             }
             
@@ -4164,6 +4650,185 @@
                 });
             }
             
+            // 月次クライアント別レポート機能
+            initializeMonthlyReport() {
+                // 年選択の初期化
+                const yearSelect = document.getElementById('report-year');
+                const monthSelect = document.getElementById('report-month');
+                const currentYear = new Date().getFullYear();
+                const currentMonth = new Date().getMonth() + 1;
+                
+                // 年のオプションを生成（現在年±2年）
+                yearSelect.innerHTML = '';
+                for (let year = currentYear - 2; year <= currentYear + 1; year++) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = `${year}年`;
+                    if (year === currentYear) option.selected = true;
+                    yearSelect.appendChild(option);
+                }
+                
+                // 月の初期選択
+                monthSelect.value = currentMonth;
+                
+                // イベントリスナー追加
+                yearSelect.addEventListener('change', () => this.updateMonthlyReport());
+                monthSelect.addEventListener('change', () => this.updateMonthlyReport());
+                
+                // 初期表示
+                this.updateMonthlyReport();
+            }
+            
+            updateMonthlyReport() {
+                const year = parseInt(document.getElementById('report-year').value);
+                const month = parseInt(document.getElementById('report-month').value);
+                
+                const startDate = new Date(year, month - 1, 1);
+                const endDate = new Date(year, month, 0, 23, 59, 59);
+                
+                // 月次データを集計
+                const monthlyData = this.generateMonthlyClientReport(startDate, endDate);
+                
+                // サマリーカード表示
+                this.renderClientMonthlySummary(monthlyData);
+                
+                // テーブル表示
+                this.renderMonthlyReportTable(monthlyData);
+            }
+            
+            generateMonthlyClientReport(startDate, endDate) {
+                const clientData = {};
+                
+                this.tasks.forEach(task => {
+                    if (!task.time_sessions || task.time_sessions.length === 0) return;
+                    
+                    const client = task.client_id ? 
+                        this.clients.find(c => c.id === task.client_id) || { name: '未指定クライアント', id: 'unspecified' } :
+                        { name: '未指定クライアント', id: 'unspecified' };
+                    
+                    if (!clientData[client.id]) {
+                        clientData[client.id] = {
+                            client: client,
+                            totalHours: 0,
+                            totalSessions: 0,
+                            tasks: {},
+                            lastUpdated: null
+                        };
+                    }
+                    
+                    task.time_sessions.forEach(session => {
+                        const sessionDate = new Date(session.start_time);
+                        
+                        if (sessionDate >= startDate && sessionDate <= endDate) {
+                            clientData[client.id].totalHours += session.hours || 0;
+                            clientData[client.id].totalSessions += 1;
+                            
+                            if (!clientData[client.id].tasks[task.id]) {
+                                clientData[client.id].tasks[task.id] = {
+                                    task: task,
+                                    hours: 0,
+                                    sessions: 0,
+                                    lastUpdated: null
+                                };
+                            }
+                            
+                            clientData[client.id].tasks[task.id].hours += session.hours || 0;
+                            clientData[client.id].tasks[task.id].sessions += 1;
+                            
+                            const sessionUpdateTime = new Date(session.created_at || session.start_time);
+                            if (!clientData[client.id].lastUpdated || sessionUpdateTime > clientData[client.id].lastUpdated) {
+                                clientData[client.id].lastUpdated = sessionUpdateTime;
+                            }
+                            if (!clientData[client.id].tasks[task.id].lastUpdated || sessionUpdateTime > clientData[client.id].tasks[task.id].lastUpdated) {
+                                clientData[client.id].tasks[task.id].lastUpdated = sessionUpdateTime;
+                            }
+                        }
+                    });
+                });
+                
+                return Object.values(clientData).filter(data => data.totalHours > 0);
+            }
+            
+            renderClientMonthlySummary(monthlyData) {
+                const summaryContainer = document.getElementById('client-monthly-summary');
+                summaryContainer.innerHTML = '';
+                
+                if (monthlyData.length === 0) {
+                    summaryContainer.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">選択された月の作業データがありません</div>';
+                    return;
+                }
+                
+                // 作業時間順にソート
+                monthlyData.sort((a, b) => b.totalHours - a.totalHours);
+                
+                monthlyData.forEach(clientData => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200';
+                    
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold text-gray-900">${clientData.client.name}</h4>
+                            <i class="fas fa-user-circle text-blue-600"></i>
+                        </div>
+                        <div class="space-y-1 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">作業時間:</span>
+                                <span class="font-semibold text-blue-700">${this.formatHoursToReadable(clientData.totalHours)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">セッション数:</span>
+                                <span class="font-medium text-gray-700">${clientData.totalSessions}回</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">タスク数:</span>
+                                <span class="font-medium text-gray-700">${Object.keys(clientData.tasks).length}個</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    summaryContainer.appendChild(card);
+                });
+            }
+            
+            renderMonthlyReportTable(monthlyData) {
+                const tableBody = document.getElementById('monthly-report-table');
+                tableBody.innerHTML = '';
+                
+                if (monthlyData.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">データがありません</td></tr>';
+                    return;
+                }
+                
+                monthlyData.forEach(clientData => {
+                    Object.values(clientData.tasks).forEach(taskData => {
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-gray-50';
+                        
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                ${clientData.client.name}
+                                ${clientData.client.company ? `<br><span class="text-xs text-gray-500">${clientData.client.company}</span>` : ''}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${taskData.task.title}
+                                <br><span class="text-xs text-gray-500">${taskData.task.status === 'completed' ? '完了' : taskData.task.status === 'in_progress' ? '進行中' : '未着手'}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                                ${this.formatHoursToReadable(taskData.hours)}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${taskData.sessions}セッション
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${taskData.lastUpdated ? taskData.lastUpdated.toLocaleDateString('ja-JP') : 'N/A'}
+                            </td>
+                        `;
+                        
+                        tableBody.appendChild(row);
+                    });
+                });
+            }
+            
             // Google Calendar API統合機能
             async initializeGoogleCalendarAPI() {
                 try {
@@ -4186,14 +4851,17 @@
                     
                     await gapi.client.init({
                         apiKey: apiKey,
-                        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
+                        discoveryDocs: [
+                            'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest',
+                            'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'
+                        ]
                     });
                     
                     // Google Identity Services初期化
                     if (window.google && window.google.accounts) {
                         this.googleTokenClient = google.accounts.oauth2.initTokenClient({
                             client_id: clientId,
-                            scope: 'https://www.googleapis.com/auth/calendar',
+                            scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks',
                             callback: (tokenResponse) => {
                                 this.googleAccessToken = tokenResponse.access_token;
                                 gapi.client.setToken({access_token: tokenResponse.access_token});
@@ -4278,69 +4946,46 @@
                     }
                     
                     const calendarId = document.getElementById('calendar-id').value || 'primary';
-                    const pendingTasks = this.tasks.filter(task => task.status !== 'completed');
+                    // 予定開始日時が設定されているタスク（完了・未完了問わず）を同期
+                    const syncableTasks = this.tasks.filter(task => 
+                        task.scheduled_date
+                    );
                     
-                    this.updateCalendarStatus(`${pendingTasks.length}個のタスクを同期中...`, 'info');
+                    this.updateCalendarStatus(`${syncableTasks.length}個のタスクを同期中...`, 'info');
                     
                     let syncedCount = 0;
                     let errorCount = 0;
                     
-                    for (const task of pendingTasks) {
+                    // メインタスクの同期
+                    for (const task of syncableTasks) {
                         try {
-                            // タスクの期限日をカレンダーイベントとして作成
-                            const eventResource = {
-                                summary: `📋 ${task.title}`,
-                                description: this.createEventDescription(task),
-                                start: {
-                                    date: task.deadline
-                                },
-                                end: {
-                                    date: task.deadline
-                                },
-                                reminders: {
-                                    useDefault: false,
-                                    overrides: [
-                                        {method: 'popup', minutes: 60},
-                                        {method: 'popup', minutes: 10}
-                                    ]
-                                },
-                                extendedProperties: {
-                                    private: {
-                                        taskflow_task_id: task.id,
-                                        taskflow_sync: 'true'
-                                    }
-                                }
-                            };
-                            
-                            // 既存のイベントをチェック
-                            const existingEvents = await gapi.client.calendar.events.list({
-                                calendarId: calendarId,
-                                privateExtendedProperty: `taskflow_task_id=${task.id}`
-                            });
-                            
-                            if (existingEvents.result.items.length > 0) {
-                                // 既存のイベントを更新
-                                const eventId = existingEvents.result.items[0].id;
-                                await gapi.client.calendar.events.update({
-                                    calendarId: calendarId,
-                                    eventId: eventId,
-                                    resource: eventResource
-                                });
-                            } else {
-                                // 新しいイベントを作成
-                                await gapi.client.calendar.events.insert({
-                                    calendarId: calendarId,
-                                    resource: eventResource
-                                });
-                            }
-                            
+                            await this.syncMainTaskToCalendar(task, calendarId);
                             syncedCount++;
-                            
                         } catch (taskError) {
                             console.error(`タスク ${task.title} の同期エラー:`, taskError);
                             errorCount++;
                         }
                     }
+                    
+                    // サブタスクの同期
+                    for (const task of syncableTasks) {
+                        if (task.subtasks && task.subtasks.length > 0) {
+                            for (const subtask of task.subtasks) {
+                                if (subtask.deadline) {
+                                    try {
+                                        await this.syncSubtaskToCalendar(subtask, task, calendarId);
+                                        syncedCount++;
+                                    } catch (subtaskError) {
+                                        console.error(`サブタスク ${subtask.title} の同期エラー:`, subtaskError);
+                                        errorCount++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 予定開始日時が削除されたタスクのイベントを削除
+                    await this.cleanupRemovedSchedules(calendarId);
                     
                     const resultMessage = `同期完了: ${syncedCount}個成功`;
                     const errorMessage = errorCount > 0 ? `, ${errorCount}個エラー` : '';
@@ -4367,7 +5012,7 @@
                 }
                 
                 if (task.estimated_hours > 0) {
-                    description += `予想作業時間: ${task.estimated_hours}時間\n`;
+                    description += `予想作業時間: ${this.formatHoursToReadable(task.estimated_hours)}\n`;
                 }
                 
                 if (task.description) {
@@ -4375,6 +5020,283 @@
                 }
                 
                 return description;
+            }
+            
+            // 自動同期機能
+            async autoSyncToCalendar(taskId = null) {
+                // 自動同期が無効の場合は何もしない
+                if (!document.getElementById('auto-sync-toggle').checked) {
+                    console.log('自動同期が無効のため、同期をスキップしました');
+                    return;
+                }
+                
+                // カレンダー同期が有効でない場合は何もしない
+                if (!document.getElementById('calendar-sync-toggle').checked) {
+                    console.log('カレンダー同期が無効のため、自動同期をスキップしました');
+                    return;
+                }
+                
+                // Google認証がされていない場合は何もしない
+                if (!this.googleAccessToken) {
+                    console.log('Google認証が必要なため、自動同期をスキップしました');
+                    return;
+                }
+                
+                try {
+                    console.log(`🔄 自動同期開始 ${taskId ? `(タスクID: ${taskId})` : '(全タスク)'}`);
+                    
+                    // 同期状況を表示
+                    this.updateCalendarStatus('自動同期中...', 'info');
+                    
+                    // 短い遅延を入れて、UI更新との競合を避ける
+                    setTimeout(async () => {
+                        try {
+                            await this.syncTasksToCalendar();
+                            console.log('✅ 自動同期完了');
+                        } catch (error) {
+                            console.error('自動同期でエラーが発生しました:', error);
+                            this.updateCalendarStatus('自動同期でエラーが発生しました', 'error');
+                        }
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('自動同期の準備でエラーが発生しました:', error);
+                }
+            }
+            
+            async syncMainTaskToCalendar(task, calendarId) {
+                // タスク名：期限 の形式で件名を作成（完了の場合は✅を追加）
+                let summary = task.status === 'completed' ? '✅ ' : '';
+                summary += task.title;
+                if (task.deadline) {
+                    summary += ` : 期限 ${task.deadline}`;
+                }
+                
+                // 予定開始日時と終了時間を計算
+                const startDateTime = new Date(task.scheduled_date + 'T09:00:00'); // デフォルト9:00開始
+                let endDateTime;
+                
+                if (task.estimated_hours && task.estimated_hours > 0) {
+                    // 予想作業時間に応じて終了時間を設定
+                    endDateTime = new Date(startDateTime.getTime() + (task.estimated_hours * 60 * 60 * 1000));
+                } else {
+                    // デフォルトで1時間後
+                    endDateTime = new Date(startDateTime.getTime() + (1 * 60 * 60 * 1000));
+                }
+                
+                const eventResource = {
+                    summary: summary,
+                    description: this.createEventDescription(task),
+                    start: {
+                        dateTime: startDateTime.toISOString(),
+                        timeZone: 'Asia/Tokyo'
+                    },
+                    end: {
+                        dateTime: endDateTime.toISOString(),
+                        timeZone: 'Asia/Tokyo'
+                    },
+                    reminders: {
+                        useDefault: false,
+                        overrides: [
+                            {method: 'popup', minutes: 30},
+                            {method: 'popup', minutes: 10}
+                        ]
+                    },
+                    extendedProperties: {
+                        private: {
+                            taskflow_task_id: task.id,
+                            taskflow_type: 'main_task',
+                            taskflow_sync: 'true'
+                        }
+                    }
+                };
+                
+                // 既存のイベントをチェック（TaskFlow IDでユニークに識別）
+                const existingEvents = await gapi.client.calendar.events.list({
+                    calendarId: calendarId,
+                    privateExtendedProperty: `taskflow_task_id=${task.id}`,
+                    showDeleted: false,
+                    singleEvents: true,
+                    timeMin: new Date(task.scheduled_date).toISOString(),
+                    timeMax: new Date(new Date(task.scheduled_date).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1年後まで検索
+                });
+                
+                if (existingEvents.result.items.length > 0) {
+                    // 既存のイベントを更新
+                    const eventId = existingEvents.result.items[0].id;
+                    const existingEvent = existingEvents.result.items[0];
+                    
+                    console.log(`🔄 タスク "${task.title}" のカレンダーイベントを更新中...`);
+                    console.log(`   - 旧開始時間: ${existingEvent.start.dateTime || existingEvent.start.date}`);
+                    console.log(`   - 新開始時間: ${eventResource.start.dateTime}`);
+                    console.log(`   - 旧件名: ${existingEvent.summary}`);
+                    console.log(`   - 新件名: ${eventResource.summary}`);
+                    
+                    await gapi.client.calendar.events.update({
+                        calendarId: calendarId,
+                        eventId: eventId,
+                        resource: eventResource
+                    });
+                    
+                    console.log(`✅ イベント更新完了: ${task.title}`);
+                } else {
+                    // 新しいイベントを作成
+                    console.log(`➕ 新規カレンダーイベント作成: ${task.title}`);
+                    console.log(`   - 開始時間: ${eventResource.start.dateTime}`);
+                    console.log(`   - 件名: ${eventResource.summary}`);
+                    
+                    await gapi.client.calendar.events.insert({
+                        calendarId: calendarId,
+                        resource: eventResource
+                    });
+                    
+                    console.log(`✅ イベント作成完了: ${task.title}`);
+                }
+            }
+            
+            async syncSubtaskToCalendar(subtask, parentTask, calendarId) {
+                // Google Calendarにタスクとして作成するための設定
+                const taskResource = {
+                    title: subtask.title,
+                    notes: `親タスク: ${parentTask.title}\n期限: ${subtask.deadline}`,
+                    due: subtask.deadline + 'T23:59:59.000Z',
+                    status: subtask.completed ? 'completed' : 'needsAction'
+                };
+                
+                // Google Tasks APIを使用してタスクを作成
+                // 注意: Google Tasks APIも有効化する必要があります
+                try {
+                    // タスクリスト取得
+                    const taskLists = await gapi.client.tasks.tasklists.list();
+                    let taskListId = taskLists.result.items[0].id; // デフォルトのタスクリスト
+                    
+                    // 既存のタスクをチェック
+                    const existingTasks = await gapi.client.tasks.tasks.list({
+                        tasklist: taskListId,
+                        showCompleted: true
+                    });
+                    
+                    let existingTask = existingTasks.result.items?.find(t => 
+                        t.notes && t.notes.includes(`TaskFlow ID: ${subtask.id || parentTask.id}-${subtask.title}`)
+                    );
+                    
+                    // TaskFlow IDを含むメモを追加
+                    taskResource.notes += `\nTaskFlow ID: ${subtask.id || parentTask.id}-${subtask.title}`;
+                    
+                    if (existingTask) {
+                        // 既存のタスクを更新
+                        await gapi.client.tasks.tasks.update({
+                            tasklist: taskListId,
+                            task: existingTask.id,
+                            resource: taskResource
+                        });
+                    } else {
+                        // 新しいタスクを作成
+                        await gapi.client.tasks.tasks.insert({
+                            tasklist: taskListId,
+                            resource: taskResource
+                        });
+                    }
+                } catch (error) {
+                    console.warn('Google Tasks APIが利用できません。イベントとして作成します。', error);
+                    // フォールバック: イベントとして作成
+                    await this.createSubtaskAsEvent(subtask, parentTask, calendarId);
+                }
+            }
+            
+            async cleanupRemovedSchedules(calendarId) {
+                try {
+                    console.log('🧹 予定開始日時が削除されたタスクのイベントをクリーンアップ中...');
+                    
+                    // TaskFlowで管理されているすべてのカレンダーイベントを取得
+                    const allTaskFlowEvents = await gapi.client.calendar.events.list({
+                        calendarId: calendarId,
+                        privateExtendedProperty: 'taskflow_sync=true',
+                        showDeleted: false,
+                        singleEvents: true,
+                        timeMin: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(), // 1年前から
+                        timeMax: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()  // 1年後まで
+                    });
+                    
+                    let deletedCount = 0;
+                    
+                    for (const event of allTaskFlowEvents.result.items) {
+                        const taskId = event.extendedProperties?.private?.taskflow_task_id;
+                        const taskType = event.extendedProperties?.private?.taskflow_type;
+                        
+                        if (taskId && taskType === 'main_task') {
+                            // 対応するタスクを検索
+                            const task = this.tasks.find(t => t.id === taskId);
+                            
+                            if (!task) {
+                                // タスクが削除された場合
+                                console.log(`🗑️ 削除されたタスクのイベントを削除: ${event.summary}`);
+                                await gapi.client.calendar.events.delete({
+                                    calendarId: calendarId,
+                                    eventId: event.id
+                                });
+                                deletedCount++;
+                            } else if (!task.scheduled_date) {
+                                // 予定開始日時が削除された場合
+                                console.log(`📅 予定開始日時が削除されたタスクのイベントを削除: ${event.summary}`);
+                                await gapi.client.calendar.events.delete({
+                                    calendarId: calendarId,
+                                    eventId: event.id
+                                });
+                                deletedCount++;
+                            }
+                        }
+                    }
+                    
+                    if (deletedCount > 0) {
+                        console.log(`✅ クリーンアップ完了: ${deletedCount}個のイベントを削除`);
+                    }
+                    
+                } catch (error) {
+                    console.error('クリーンアップ処理でエラーが発生しました:', error);
+                }
+            }
+            
+            async createSubtaskAsEvent(subtask, parentTask, calendarId) {
+                const completedMark = subtask.completed ? '✅ ' : '';
+                const eventResource = {
+                    summary: `📌 ${completedMark}${subtask.title}`,
+                    description: `サブタスク\n親タスク: ${parentTask.title}\n期限: ${subtask.deadline}`,
+                    start: {
+                        date: subtask.deadline
+                    },
+                    end: {
+                        date: subtask.deadline
+                    },
+                    extendedProperties: {
+                        private: {
+                            taskflow_subtask_id: subtask.id || `${parentTask.id}-${subtask.title}`,
+                            taskflow_type: 'subtask',
+                            taskflow_parent_id: parentTask.id,
+                            taskflow_sync: 'true'
+                        }
+                    }
+                };
+                
+                // 既存のイベントをチェック
+                const existingEvents = await gapi.client.calendar.events.list({
+                    calendarId: calendarId,
+                    privateExtendedProperty: `taskflow_subtask_id=${subtask.id || `${parentTask.id}-${subtask.title}`}`
+                });
+                
+                if (existingEvents.result.items.length > 0) {
+                    const eventId = existingEvents.result.items[0].id;
+                    await gapi.client.calendar.events.update({
+                        calendarId: calendarId,
+                        eventId: eventId,
+                        resource: eventResource
+                    });
+                } else {
+                    await gapi.client.calendar.events.insert({
+                        calendarId: calendarId,
+                        resource: eventResource
+                    });
+                }
             }
             
             // データ管理機能

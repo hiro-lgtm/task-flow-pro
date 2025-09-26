@@ -1,89 +1,68 @@
-# 🚀 TaskFlow Pro - 企業経営改善専門家向けタスク管理システム
+# 🚀 TaskFlow Pro
 
-**完全機能統合型** タスク管理・プロジェクト管理システム
+**企業経営改善専門家向け** 完全機能統合型タスク管理システム
 
 ## 🎯 概要
 
-企業経営改善の伴奏支援を行う専門家や監査役の方々のために開発された、包括的なタスク管理システムです。
+企業経営改善の伴奏支援を行う専門家や監査役向けに設計された包括的なタスク管理・プロジェクト管理システムです。
 
-- 📱 **PWA対応**: アプリのような使用感
-- 🔥 **Firebase同期**: リアルタイムでデバイス間同期
-- 🔐 **Google認証**: セキュアなログインシステム
-- 📊 **高度な分析**: Chart.jsによる美しいデータ可視化
-- ⏱️ **時間追跡**: 詳細な作業時間管理
+### 🌟 主な機能
+
+- 📋 **完全タスク管理**: CRUD操作・サブタスク・進捗追跡
+- 📊 **ガントチャート**: 視覚的プロジェクト管理
+- ⏱️ **時間追跡**: リアルタイムタイマー・実績管理
+- 👥 **顧客管理**: クライアント情報・連絡先管理
+- 📈 **レポート分析**: Chart.jsによる美しいデータ可視化
+- 📅 **Google Calendar統合**: 自動同期・イベント管理
+- 🔥 **Firebase同期**: リアルタイムデータ同期
+- 📱 **PWA対応**: オフライン利用・アプリライク体験
 
 ## 🚀 クイックスタート
 
-1. **index.html** をブラウザで開く
-2. Firebase設定を完了
-3. Google認証でログイン
-4. タスク管理を開始！
-
-## 📁 プロジェクト構成
-
-```
-TaskFlow Pro/
-├── index.html                    # メインアプリケーション
-├── manifest.json                 # PWA設定
-├── docs/                        # 📚 ドキュメント
-│   ├── README.md                 # 詳細な機能説明
-│   ├── DEPLOYMENT.md            # デプロイメントガイド
-│   ├── ARC-SETUP.md            # Arc Browser設定
-│   └── FIREBASE-SETUP.md       # Firebase設定ガイド
-└── config/                      # ⚙️ 設定ファイル
-    └── firestore-security-rules.js  # Firestoreセキュリティルール
-```
+1. **[index.html](./index.html)** をブラウザで開く
+2. 必要に応じて外部サービス連携を設定
+3. すぐにタスク管理を開始！
 
 ## 📚 ドキュメント
 
-- **[機能詳細](docs/README.md)** - 全機能の詳細説明
-- **[Firebase設定](docs/FIREBASE-SETUP.md)** - Firebase Consoleの設定方法
-- **[Arc Browser対応](docs/ARC-SETUP.md)** - Arc Browserでの最適使用法
-- **[デプロイメント](docs/DEPLOYMENT.md)** - 本番環境への展開方法
-
-## ✨ 主要機能
-
-### 📋 タスク管理
-- 完全なCRUD操作
-- サブタスク機能
-- 優先度・ステータス管理
-- 期限アラート
-
-### 👥 顧客管理
-- 顧客情報管理
-- タスクとの関連付け
-- 統計・分析機能
-
-### 📊 レポート・分析
-- ガントチャート表示
-- Chart.jsによるデータ可視化
-- 月別作業時間推移
-- 進捗分析
-
-### ⚙️ 高度な機能
-- リアルタイム同期（Firebase）
-- Google Calendar統合
-- PWA対応
-- デスクトップ通知
-- データエクスポート/インポート
-
-## 🛠️ 技術仕様
-
-- **フロントエンド**: HTML5, CSS3, Vanilla JavaScript
-- **UI Framework**: Tailwind CSS
-- **データ可視化**: Chart.js
-- **認証**: Google OAuth2
-- **データベース**: Firebase Firestore
-- **ストレージ**: LocalStorage + Firebase
+- 📖 **[詳細説明](./docs/README.md)**: 全機能の詳細解説
+- ⚙️ **[セットアップガイド](./docs/)**: Firebase・Google Calendar等の設定手順
 
 ## 🎯 対象ユーザー
 
-- 企業経営改善の専門家
-- 監査役・コンサルタント
+- 企業経営改善コンサルタント
+- 監査役・内部監査担当者
 - プロジェクトマネージャー
-- 個人事業主
+- フリーランス・個人事業主
+
+## 💻 技術スタック
+
+- **フロントエンド**: HTML5, CSS3, JavaScript (ES6+)
+- **UI Framework**: Tailwind CSS
+- **チャート**: Chart.js
+- **同期**: Firebase Firestore
+- **認証**: Google OAuth
+- **PWA**: Service Worker + Manifest
+
+## 📁 ファイル構成
+
+```
+📦 TaskFlow Pro
+├── 📄 index.html          # メインアプリケーション
+├── 📄 manifest.json       # PWA設定
+├── 📁 docs/               # 詳細ドキュメント
+└── 📁 config/             # 設定ファイル
+```
+
+## 🛠️ 開発・カスタマイズ
+
+システムは単一HTMLファイルで構成されており、簡単にカスタマイズ可能です。
+
+- **データ保存**: LocalStorage (オフライン対応)
+- **外部連携**: Firebase・Google Calendar (オプション)
+- **拡張性**: モジュール設計でカスタマイズ容易
 
 ---
 
-**開発**: AI Assistant  
-**最終更新**: 2025年1月8日
+📖 **詳細な機能説明や設定手順は [docs/](./docs/) フォルダをご覧ください**
+
