@@ -5430,9 +5430,15 @@
                 document.getElementById('task-priority').value = task.priority || 'medium';
                 
                 if (task.scheduled_date) {
-                    const localScheduled = new Date(task.scheduled_date);
-                    localScheduled.setMinutes(localScheduled.getMinutes() - localScheduled.getTimezoneOffset());
-                    document.getElementById('task-scheduled').value = localScheduled.toISOString().slice(0, 16);
+                    // datetime-localフィールドのためにローカル時間として表示
+                    // タイムゾーンオフセットは手動調整せず、ブラウザの自動変換に任せる
+                    const scheduledDate = new Date(task.scheduled_date);
+                    if (!isNaN(scheduledDate.getTime())) {
+                        // ISO形式の最初の16文字（YYYY-MM-DDTHH:mm）を使用
+                        document.getElementById('task-scheduled').value = scheduledDate.toISOString().slice(0, 16);
+                    } else {
+                        document.getElementById('task-scheduled').value = '';
+                    }
                 } else {
                     document.getElementById('task-scheduled').value = '';
                 }
@@ -7623,14 +7629,36 @@
                 }
                 
                 // 日付フォーマットの検証と修正
-                let scheduledDate = task.scheduled_date;
+                let scheduledDateTime = task.scheduled_date;
+                let startDateTime;
                 
-                // ISO日付時刻形式 (2025-09-17T07:13) を日付部分のみに変換
-                if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(scheduledDate)) {
-                    scheduledDate = scheduledDate.split('T')[0]; // 日付部分のみ取得
-                    console.log(`📅 日付時刻を日付に変換: ${task.title} - ${task.scheduled_date} → ${scheduledDate}`);
-                } else if (!/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate)) {
-                    console.warn(`⚠️ 不正な日付フォーマット: ${task.title} - ${scheduledDate}`);
+                // ISO日付時刻形式 (2025-09-17T07:13) の場合は時刻情報を保持
+                if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(scheduledDateTime)) {
+                    // 時刻情報がある場合はそのまま使用（秒情報がない場合は追加）
+                    if (!scheduledDateTime.includes(':00', scheduledDateTime.lastIndexOf(':'))) {
+                        scheduledDateTime += ':00'; // 秒情報を追加
+                    }
+                    
+                    // 日本時間として解釈するため、タイムゾーンオフセットなしで処理
+                    startDateTime = new Date(scheduledDateTime);
+                    
+                    // ローカル時間として解釈された日付が正しいかチェック
+                    if (isNaN(startDateTime.getTime())) {
+                        console.warn(`⚠️ 日時解析エラー: ${task.title} - ${scheduledDateTime}`);
+                        return;
+                    }
+                    
+                    console.log(`📅 時刻情報を保持: ${task.title}`);
+                    console.log(`   - 元データ: ${task.scheduled_date}`);
+                    console.log(`   - 処理後: ${scheduledDateTime}`);
+                    console.log(`   - 日本時間: ${startDateTime.toLocaleString('ja-JP')}`);
+                    console.log(`   - UTC時間: ${startDateTime.toISOString()}`);
+                } else if (/^\d{4}-\d{2}-\d{2}$/.test(scheduledDateTime)) {
+                    // 日付のみの場合はデフォルトで9:00開始
+                    startDateTime = new Date(scheduledDateTime + 'T09:00:00');
+                    console.log(`📅 日付のみの場合はデフォルト9:00開始: ${task.title} - ${scheduledDateTime} (${startDateTime.toLocaleString('ja-JP')})`);
+                } else {
+                    console.warn(`⚠️ 不正な日付フォーマット: ${task.title} - ${scheduledDateTime}`);
                     return;
                 }
                 
@@ -7642,7 +7670,6 @@
                 }
                 
                 // 予定開始日時と終了時間を計算
-                const startDateTime = new Date(scheduledDate + 'T09:00:00'); // デフォルト9:00開始
                 
                 // 日付オブジェクトの有効性をチェック
                 if (isNaN(startDateTime.getTime())) {
@@ -7665,6 +7692,12 @@
                     return;
                 }
                 
+                console.log(`🗓️ Googleカレンダーイベント作成準備: ${task.title}`);
+                console.log(`   - 開始時刻（ローカル）: ${startDateTime.toLocaleString('ja-JP')}`);
+                console.log(`   - 開始時刻（ISO）: ${startDateTime.toISOString()}`);
+                console.log(`   - 終了時刻（ローカル）: ${endDateTime.toLocaleString('ja-JP')}`);
+                console.log(`   - 終了時刻（ISO）: ${endDateTime.toISOString()}`);
+
                 const eventResource = {
                     summary: summary,
                     description: this.createEventDescription(task),
