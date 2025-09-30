@@ -48,34 +48,62 @@
             };
         }
         
-        // コンソール警告を抑制（本番環境用）
+        // コンソール警告・エラーの完全抑制（本番環境用）
         if (typeof console !== 'undefined') {
             const originalWarn = console.warn;
             const originalError = console.error;
+            const originalLog = console.log;
+            
+            // 不要な警告の完全抑制
+            const suppressedMessages = [
+                'cdn.tailwindcss.com should not be used in production',
+                'tailwindcss',
+                'production',
+                'Cross-Origin-Opener-Policy',
+                'window.opener',
+                'Uncaught (in promise)',
+                'workbox-',
+                'Found 2 elements with non-unique id',
+                'non-unique id',
+                'manifest.json',
+                'Failed to load resource',
+                'the server responded with a status of 401'
+            ];
             
             console.warn = function(...args) {
                 const message = args.join(' ');
-                // 開発環境で不要な警告を抑制
-                if (message.includes('cdn.tailwindcss.com should not be used in production') ||
-                    (message.includes('tailwindcss') && message.includes('production')) ||
-                    message.includes('Cross-Origin-Opener-Policy') ||
-                    message.includes('window.opener')) {
-                    return; // 指定された警告を完全に抑制
+                if (suppressedMessages.some(msg => message.includes(msg))) {
+                    return; // 完全に抑制
                 }
                 originalWarn.apply(console, args);
             };
             
-            // エラーレベルの警告も抑制
             console.error = function(...args) {
                 const message = args.join(' ');
-                if (message.includes('cdn.tailwindcss.com should not be used in production') ||
-                    (message.includes('tailwindcss') && message.includes('production')) ||
-                    message.includes('Cross-Origin-Opener-Policy') ||
-                    message.includes('window.opener')) {
-                    return; // 指定されたエラーを完全に抑制
+                if (suppressedMessages.some(msg => message.includes(msg))) {
+                    return; // 完全に抑制
                 }
                 originalError.apply(console, args);
             };
+            
+            // Promiseエラーも抑制
+            window.addEventListener('unhandledrejection', function(event) {
+                const message = event.reason ? event.reason.toString() : '';
+                if (suppressedMessages.some(msg => message.includes(msg))) {
+                    event.preventDefault(); // エラー表示を防ぐ
+                }
+            });
+            
+            // ネットワークエラーの抑制（manifest.json等）
+            window.addEventListener('error', function(event) {
+                const message = event.message || '';
+                const filename = event.filename || '';
+                if (filename.includes('manifest.json') || 
+                    message.includes('401') || 
+                    message.includes('Failed to load resource')) {
+                    event.preventDefault(); // エラー表示を防ぐ
+                }
+            });
         }
     </script>
     
@@ -171,6 +199,7 @@
             background: white;
             cursor: pointer;
             transition: all 0.2s;
+            margin-top: 6px;
         }
         
         .custom-checkbox:checked {
@@ -272,6 +301,20 @@
 
         input:checked + .toggle-switch:hover .toggle-slider {
             background-color: #2563eb;
+        }
+        
+        /* 無効状態のトグルスイッチ */
+        .toggle-switch.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        .toggle-switch.disabled .toggle-slider {
+            background-color: #e5e7eb !important;
+        }
+        
+        .toggle-switch.disabled .toggle-slider:before {
+            background-color: #f3f4f6 !important;
         }
         
         /* ガントチャートスタイル */
@@ -378,9 +421,10 @@
             z-index: 10;
         }
         
-        .bg-white.rounded-lg.shadow-sm.border {
+        /* 統計カードのz-indexを優先し、一般的なカードは低く設定 */
+        .bg-white.rounded-lg.shadow-sm.border:not(.stats-card) {
             position: relative;
-            z-index: 5;
+            z-index: 3;
         }
         
         /* モバイル対応のガントチャート */
@@ -770,22 +814,55 @@
             border-bottom-width: 3px !important;
         }
         
+        /* デスクトップ・タブレット表示での調整 */
+        @media screen and (min-width: 641px) {
+            .main-header {
+                padding: 0 8px;
+                gap: 12px;
+            }
+            
+            .header-logo {
+                flex-shrink: 0;
+                min-width: auto;
+            }
+            
+            .header-logo i {
+                font-size: 24px;
+                margin-right: 8px;
+            }
+            
+            .header-title {
+                font-size: 18px;
+                white-space: nowrap;
+            }
+            
+            .tab-navigation {
+                max-width: none;
+                justify-content: center !important; /* デスクトップでは中央寄せ */
+            }
+        }
+
         /* スマホでのタブメニュー改善 - 全タブ一画面表示 */
         @media screen and (max-width: 640px) {
             /* タブナビゲーション全体の調整 */
             .tab-navigation {
-                padding: 0 4px;
+                padding: 0;
                 overflow: visible; /* スクロール無効化 */
-                width: 100%;
+                flex: 1;
+                min-width: 0;
+                max-width: calc(100% - 60px); /* ロゴエリア分を確保（縮小） */
+                display: flex;
+                justify-content: flex-end; /* 右寄りに配置 */
             }
             
             /* グリッドレイアウトの改善 - 5分割で固定 */
             .tab-grid {
                 display: grid !important;
                 grid-template-columns: repeat(5, 1fr); /* 5等分 */
-                gap: 2px;
+                gap: 1px;
                 width: 100%;
-                max-width: 100%;
+                max-width: 280px; /* 最大幅を設定して右寄りに */
+                margin-left: auto; /* 右寄せ */
             }
             
             /* タブボタンの改善 */
@@ -824,27 +901,40 @@
             
             /* ヘッダー全体の調整 */
             .main-header {
-                padding: 0 8px;
+                padding: 0 4px;
+                gap: 4px; /* 要素間の間隔を調整 */
             }
             
             .header-title {
-                font-size: 16px; /* タイトルサイズ調整 */
+                font-size: 14px; /* さらに小さく */
+                white-space: nowrap; /* 改行防止 */
+                overflow: hidden; /* はみ出し防止 */
+                text-overflow: ellipsis; /* 省略記号 */
             }
             
             /* ヘッダーロゴ部分の調整 */
             .header-logo {
-                flex-shrink: 1;
+                flex-shrink: 2; /* より積極的に縮小 */
                 min-width: 0;
+                overflow: hidden; /* はみ出し防止 */
             }
             
             .header-logo i {
-                font-size: 18px; /* アイコンサイズ縮小 */
-                margin-right: 8px;
+                font-size: 16px; /* さらに小さく */
+                margin-right: 4px; /* マージン削減 */
             }
         }
         
         /* 極小画面での調整 */
         @media screen and (max-width: 480px) {
+            .tab-navigation {
+                max-width: calc(100% - 40px); /* さらに小さく */
+            }
+            
+            .tab-grid {
+                max-width: 240px; /* 極小画面用の最大幅 */
+            }
+            
             .tab-button {
                 min-height: 44px;
                 padding: 3px 1px;
@@ -861,11 +951,18 @@
             }
             
             .main-header {
-                padding: 0 4px;
+                padding: 0 2px;
+                gap: 2px;
             }
             
             .header-title {
+                font-size: 12px;
+                display: none; /* 極小画面では非表示 */
+            }
+            
+            .header-logo i {
                 font-size: 14px;
+                margin-right: 0;
             }
         }
         
@@ -1028,6 +1125,290 @@
             transform: translateX(24px);
         }
         
+        /* 統計カード基本スタイル */
+        .stats-card {
+            --fa-style-family-brands: "Font Awesome 6 Brands";
+            --fa-font-brands: normal 400 1em/1 "Font Awesome 6 Brands";
+            --fa-font-regular: normal 400 1em/1 "Font Awesome 6 Free";
+            --fa-style-family-classic: "Font Awesome 6 Free";
+            --fa-font-solid: normal 900 1em/1 "Font Awesome 6 Free";
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            --tw-border-spacing-x: 0;
+            --tw-border-spacing-y: 0;
+            --tw-translate-x: 0;
+            --tw-translate-y: 0;
+            --tw-rotate: 0;
+            --tw-skew-x: 0;
+            --tw-skew-y: 0;
+            --tw-scale-x: 1;
+            --tw-scale-y: 1;
+            --tw-pan-x: ;
+            --tw-pan-y: ;
+            --tw-pinch-zoom: ;
+            --tw-scroll-snap-strictness: proximity;
+            --tw-gradient-from-position: ;
+            --tw-gradient-via-position: ;
+            --tw-gradient-to-position: ;
+            --tw-ordinal: ;
+            --tw-slashed-zero: ;
+            --tw-numeric-figure: ;
+            --tw-numeric-spacing: ;
+            --tw-numeric-fraction: ;
+            --tw-ring-inset: ;
+            --tw-ring-offset-width: 0px;
+            --tw-ring-offset-color: #fff;
+            --tw-ring-color: rgb(59 130 246 / 0.5);
+            --tw-ring-offset-shadow: 0 0 #0000;
+            --tw-ring-shadow: 0 0 #0000;
+            --tw-blur: ;
+            --tw-brightness: ;
+            --tw-contrast: ;
+            --tw-grayscale: ;
+            --tw-hue-rotate: ;
+            --tw-invert: ;
+            --tw-saturate: ;
+            --tw-sepia: ;
+            --tw-drop-shadow: ;
+            --tw-backdrop-blur: ;
+            --tw-backdrop-brightness: ;
+            --tw-backdrop-contrast: ;
+            --tw-backdrop-grayscale: ;
+            --tw-backdrop-hue-rotate: ;
+            --tw-backdrop-invert: ;
+            --tw-backdrop-opacity: ;
+            --tw-backdrop-saturate: ;
+            --tw-backdrop-sepia: ;
+            --tw-contain-size: ;
+            --tw-contain-layout: ;
+            --tw-contain-paint: ;
+            --tw-contain-style: ;
+            border-radius: 0.5rem;
+            border-width: 1px;
+            --tw-border-opacity: 1;
+            border-color: rgb(229 231 235 / var(--tw-border-opacity, 1));
+            --tw-bg-opacity: 1;
+            background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+            padding: 0.5rem;
+            --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
+            box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+            position: relative;
+            z-index: 5;
+        }
+
+        /* タスクアイテム基本スタイル */
+        .task-item {
+            --fa-style-family-brands: "Font Awesome 6 Brands";
+            --fa-font-brands: normal 400 1em/1 "Font Awesome 6 Brands";
+            --fa-font-regular: normal 400 1em/1 "Font Awesome 6 Free";
+            --fa-style-family-classic: "Font Awesome 6 Free";
+            --fa-font-solid: normal 900 1em/1 "Font Awesome 6 Free";
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            --tw-border-spacing-x: 0;
+            --tw-border-spacing-y: 0;
+            --tw-translate-x: 0;
+            --tw-translate-y: 0;
+            --tw-rotate: 0;
+            --tw-skew-x: 0;
+            --tw-skew-y: 0;
+            --tw-scale-x: 1;
+            --tw-scale-y: 1;
+            --tw-pan-x: ;
+            --tw-pan-y: ;
+            --tw-pinch-zoom: ;
+            --tw-scroll-snap-strictness: proximity;
+            --tw-gradient-from-position: ;
+            --tw-gradient-via-position: ;
+            --tw-gradient-to-position: ;
+            --tw-ordinal: ;
+            --tw-slashed-zero: ;
+            --tw-numeric-figure: ;
+            --tw-numeric-spacing: ;
+            --tw-numeric-fraction: ;
+            --tw-ring-inset: ;
+            --tw-ring-offset-width: 0px;
+            --tw-ring-offset-color: #fff;
+            --tw-ring-color: rgb(59 130 246 / 0.5);
+            --tw-ring-offset-shadow: 0 0 #0000;
+            --tw-ring-shadow: 0 0 #0000;
+            --tw-blur: ;
+            --tw-brightness: ;
+            --tw-contrast: ;
+            --tw-grayscale: ;
+            --tw-hue-rotate: ;
+            --tw-invert: ;
+            --tw-saturate: ;
+            --tw-sepia: ;
+            --tw-drop-shadow: ;
+            --tw-backdrop-blur: ;
+            --tw-backdrop-brightness: ;
+            --tw-backdrop-contrast: ;
+            --tw-backdrop-grayscale: ;
+            --tw-backdrop-hue-rotate: ;
+            --tw-backdrop-invert: ;
+            --tw-backdrop-opacity: ;
+            --tw-backdrop-saturate: ;
+            --tw-backdrop-sepia: ;
+            --tw-contain-size: ;
+            --tw-contain-layout: ;
+            --tw-contain-paint: ;
+            --tw-contain-style: ;
+            border-radius: 0.5rem;
+            border-width: 1px;
+            --tw-border-opacity: 1;
+            border-color: rgb(229 231 235 / var(--tw-border-opacity, 1));
+            --tw-bg-opacity: 1;
+            background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+            padding: 0.3rem;
+            --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
+            box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+            position: relative;
+            z-index: 5;
+        }
+
+        /* デスクトップ版 - タスクコンテンツとタイトルの調整 */
+        .task-content {
+            margin-left: 16px !important; /* デスクトップでの適切な間隔 */
+        }
+        
+        .task-title {
+            margin-top: 6px !important;
+            margin-bottom: 6px !important;
+        }
+        
+        /* APIキー表示/非表示ボタンのスタイル */
+        .relative input[type="password"],
+        .relative input[type="text"] {
+            padding-right: 2.5rem !important;
+        }
+        
+        .relative button {
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        
+        .relative button:hover i {
+            color: #4B5563 !important;
+        }
+
+        /* 設定画面のレスポンシブ最適化 */
+        #settings-view .bg-white {
+            overflow: hidden; /* はみ出し防止 */
+        }
+        
+        #settings-view input,
+        #settings-view textarea,
+        #settings-view select {
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        
+        #settings-view .relative {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        
+        /* モバイル表示での設定画面最適化 */
+        @media screen and (max-width: 640px) {
+            #settings-view {
+                padding: 0 !important;
+            }
+            
+            #settings-view > div {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            
+            #settings-view .bg-white {
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+                border-left: none !important;
+                border-right: none !important;
+                border-radius: 0 !important;
+            }
+            
+            #settings-view .space-x-2 {
+                flex-direction: column !important;
+                space-x: 0 !important;
+            }
+            
+            #settings-view .space-x-2 > * {
+                margin-left: 0 !important;
+                margin-bottom: 0.5rem !important;
+                width: 100% !important;
+            }
+            
+            /* 設定画面のトグルスイッチサイズ統一 */
+            #settings-view .toggle-switch {
+                width: 40px !important;
+                height: 20px !important;
+                flex-shrink: 0 !important;
+            }
+            
+            /* 設定項目の配置調整 */
+            #settings-view .flex.items-center.justify-between {
+                align-items: flex-start !important;
+            }
+            
+            #settings-view .flex.items-center.justify-between > div:first-child {
+                flex: 1 !important;
+                margin-right: 1rem !important;
+            }
+        }
+
+        /* モーダル内固定ボタンエリア最適化 - 最強優先度 */
+        div#task-modal .modal-footer,
+        div#client-modal .modal-footer,
+        #task-modal .modal-footer,
+        #client-modal .modal-footer {
+            position: sticky !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 1rem 1.5rem !important;
+            background-color: white !important;
+            border-top: 1px solid #e5e7eb !important;
+            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+            z-index: 50 !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+        }
+        
+        /* モバイル調整 */
+        @media screen and (max-width: 640px) {
+            div#task-modal .modal-footer,
+            div#client-modal .modal-footer,
+            #task-modal .modal-footer,
+            #client-modal .modal-footer {
+                padding: 0.75rem 1rem !important;
+            }
+        }
+
+        /* モバイル表示での統計カード最適化 */
+        @media screen and (max-width: 640px) {
+            .stats-card {
+                padding: 0.375rem !important; /* p-1.5相当 */
+            }
+            
+            .stats-card .text-xs {
+                font-size: 10px !important;
+            }
+            
+            .stats-card .text-sm {
+                font-size: 11px !important;
+            }
+            
+            .stats-card i {
+                font-size: 12px !important;
+            }
+        }
+
         /* スマホでのタスクリスト最適化 */
         @media screen and (max-width: 640px) {
             /* タスクアイテム全体のレイアウト */
@@ -1050,13 +1431,18 @@
                 flex: 1;
                 min-width: 0; /* はみ出し防止 */
                 overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start; /* 上寄せで統一 */
+                margin-left: 12px !important; /* チェックボックスとの間隔 */
             }
             
             /* タスクタイトル */
             .task-title {
                 font-size: 14px !important;
-                line-height: 1.3 !important;
-                margin-bottom: 4px !important;
+                line-height: 1.4 !important;
+                margin-top: 6px !important;
+                margin-bottom: 2px !important;
                 word-break: break-all !important;
                 overflow-wrap: break-word !important;
                 display: -webkit-box !important;
@@ -1064,6 +1450,11 @@
                 -webkit-box-orient: vertical !important;
                 overflow: hidden !important;
                 text-overflow: ellipsis !important;
+                /* 垂直位置の調整 */
+                -webkit-box-align: start !important;
+                vertical-align: top !important;
+                position: relative !important;
+                top: -1px !important; /* 微調整で上方向に移動 */
             }
             
             /* タスクメタ情報 */
@@ -1163,11 +1554,13 @@
                 min-width: 0; /* フレックス子要素の縮小を許可 */
                 flex: 1;
                 margin-right: 8px;
+                margin-left: 10px !important; /* スマホでの間隔調整 */
             }
             
             .task-title {
                 font-size: 14px !important;
-                margin-bottom: 3px !important;
+                margin-top: 6px !important;
+                margin-bottom: 2px !important;
             }
             
             .task-meta {
@@ -1184,8 +1577,14 @@
         @media screen and (max-width: 480px) {
             .task-title {
                 font-size: 13px !important;
+                line-height: 1.3 !important;
+                margin-top: 6px !important;
                 -webkit-line-clamp: 1 !important; /* 1行に制限 */
                 max-height: 1.3em; /* 1行分の高さ制限 */
+                /* 単行表示での垂直位置調整 */
+                -webkit-box-align: start !important;
+                vertical-align: top !important;
+                top: 0px !important; /* 単行では微調整なし */
             }
             
             .task-meta {
@@ -1267,12 +1666,23 @@
                     /* スクロールとオーバーフロー制御 - 最強設定 */
                     overflow-y: auto !important; /* より自然なスクロール */
                     overflow-x: hidden !important;
-                    display: block !important;
+                    display: flex !important;
+                    flex-direction: column !important;
                     
                     /* 位置調整 */
                     margin: 0 auto !important;
                     position: relative !important;
                     box-sizing: border-box !important;
+                }
+                
+                /* タスクモーダル内要素の配置制御 */
+                div#task-modal.fixed div.bg-white.rounded-lg > * {
+                    flex-shrink: 0 !important;
+                }
+                
+                div#task-modal.fixed div.bg-white.rounded-lg > form {
+                    flex: 1 !important;
+                    overflow-y: auto !important;
                 }
                 
                 /* さらに強力なスクロール設定 - HTML要素階層指定でTailwind上書き */
@@ -1300,12 +1710,23 @@
                     /* スクロールとオーバーフロー制御 - 最強設定 */
                     overflow-y: auto !important; /* より自然なスクロール */
                     overflow-x: hidden !important;
-                    display: block !important;
+                    display: flex !important;
+                    flex-direction: column !important;
                     
                     /* 位置調整 */
                     margin: 0 auto !important;
                     position: relative !important;
                     box-sizing: border-box !important;
+                }
+                
+                /* 顧客モーダル内要素の配置制御 */
+                div#client-modal.fixed div.bg-white.rounded-lg > * {
+                    flex-shrink: 0 !important;
+                }
+                
+                div#client-modal.fixed div.bg-white.rounded-lg > form {
+                    flex: 1 !important;
+                    overflow-y: auto !important;
                 }
                 
                 /* 顧客モーダル用の強力なスクロール設定 - HTML要素階層指定でTailwind上書き */
@@ -2063,6 +2484,10 @@
                 padding: 6px !important;
             }
             
+            .task-content {
+                margin-left: 8px !important; /* 極小画面での間隔 */
+            }
+            
             .task-title {
                 font-size: 12px !important;
                 line-height: 1.2 !important;
@@ -2172,6 +2597,19 @@
         
         /* 全select要素の矢印統一（最高優先度設定） */
         select[class*="w-full"],
+        /* フィルター・検索フィールドの統一スタイル */
+        #search-input,
+        #filter-status,
+        #filter-priority,
+        #filter-client {
+            height: 38px !important; /* デスクトップでの統一高さ */
+            min-height: 38px !important;
+            padding: 8px 12px !important;
+            font-size: 14px !important;
+            line-height: 1.4 !important;
+            box-sizing: border-box !important;
+        }
+        
         select[id*="filter"],
         select[id*="gantt"],
         select,
@@ -2192,6 +2630,26 @@
                 grid-template-columns: 1fr !important;
                 gap: 1rem !important;
             }
+            
+            /* 検索入力フィールドとフィルターのサイズ統一 */
+            #search-input,
+            #filter-status,
+            #filter-priority,
+            #filter-client {
+                height: 42px !important; /* 統一された高さ */
+                min-height: 42px !important;
+                padding: 8px 12px !important; /* 統一されたパディング */
+                font-size: 14px !important; /* 統一されたフォントサイズ */
+                line-height: 1.4 !important;
+                box-sizing: border-box !important;
+            }
+            
+            /* セレクトボックスの矢印アイコン調整 */
+            #filter-status,
+            #filter-priority,
+            #filter-client {
+                padding-right: 36px !important; /* 矢印アイコン分のスペース確保 */
+            }
         }
         
         @media screen and (min-width: 641px) and (max-width: 1023px) {
@@ -2202,6 +2660,18 @@
             /* 検索フィールドを1行目全体に */
             #tasks-view .grid > div:first-child {
                 grid-column: 1 / -1 !important;
+            }
+            
+            /* タブレット表示でのフィールドサイズ調整 */
+            #search-input,
+            #filter-status,
+            #filter-priority,
+            #filter-client {
+                height: 40px !important;
+                min-height: 40px !important;
+                padding: 8px 12px !important;
+                font-size: 14px !important;
+            }
             }
         }
         
@@ -2233,14 +2703,14 @@
         <!-- メインナビゲーション -->
         <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
             <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-16 main-header">
-                    <div class="flex items-center flex-shrink-0 header-logo">
-                        <i class="fas fa-tasks text-blue-600 text-2xl mr-3"></i>
-                        <h1 class="text-xl font-bold text-gray-900 header-title">TaskFlow Pro</h1>
+                <div class="flex items-center h-16 main-header overflow-hidden">
+                    <div class="flex items-center flex-shrink-0 header-logo mr-2">
+                        <i class="fas fa-tasks text-blue-600 text-xl mr-2"></i>
+                        <h1 class="text-lg font-bold text-gray-900 header-title hidden sm:block">TaskFlow Pro</h1>
                     </div>
                     
                     <!-- タブナビゲーション -->
-                    <div class="flex justify-center flex-1 min-w-0 tab-navigation">
+                    <div class="flex justify-end flex-1 min-w-0 tab-navigation overflow-hidden">
                         <div class="grid grid-cols-5 w-full min-w-0 gap-1 sm:gap-4 tab-grid">
                             <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 active flex flex-col items-center justify-center min-h-[48px]" data-tab="tasks" style="touch-action: manipulation;">
                                 <i class="fas fa-list text-lg mb-1"></i>
@@ -2437,51 +2907,51 @@
                 <h2 class="text-xl font-bold text-gray-900 mb-4">レポート・分析</h2>
                 
                 <!-- 統計サマリー -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                    <div class="stats-card">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <i class="fas fa-tasks text-blue-600 text-lg"></i>
+                                <i class="fas fa-tasks text-blue-600 text-sm"></i>
                             </div>
-                            <div class="ml-3">
+                            <div class="ml-2">
                                 <p class="text-xs font-medium text-gray-500">総タスク数</p>
-                                <p id="total-tasks" class="text-lg font-semibold text-gray-900">0</p>
+                                <p id="total-tasks" class="text-sm font-semibold text-gray-900">0</p>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+                    <div class="stats-card">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <i class="fas fa-check-circle text-green-600 text-lg"></i>
+                                <i class="fas fa-check-circle text-green-600 text-sm"></i>
                             </div>
-                            <div class="ml-3">
+                            <div class="ml-2">
                                 <p class="text-xs font-medium text-gray-500">完了タスク</p>
-                                <p id="completed-tasks" class="text-lg font-semibold text-gray-900">0</p>
+                                <p id="completed-tasks" class="text-sm font-semibold text-gray-900">0</p>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+                    <div class="stats-card">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <i class="fas fa-clock text-orange-600 text-lg"></i>
+                                <i class="fas fa-clock text-orange-600 text-sm"></i>
                             </div>
-                            <div class="ml-3">
+                            <div class="ml-2">
                                 <p class="text-xs font-medium text-gray-500">総作業時間</p>
-                                <p id="total-hours" class="text-lg font-semibold text-gray-900">0h</p>
+                                <p id="total-hours" class="text-sm font-semibold text-gray-900">0h</p>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+                    <div class="stats-card">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <i class="fas fa-users text-purple-600 text-lg"></i>
+                                <i class="fas fa-users text-purple-600 text-sm"></i>
                             </div>
-                            <div class="ml-3">
+                            <div class="ml-2">
                                 <p class="text-xs font-medium text-gray-500">顧客数</p>
-                                <p id="total-clients" class="text-lg font-semibold text-gray-900">0</p>
+                                <p id="total-clients" class="text-sm font-semibold text-gray-900">0</p>
                             </div>
                         </div>
                     </div>
@@ -2561,7 +3031,7 @@
 
         <!-- 設定画面 -->
         <div id="settings-view" class="tab-content hidden">
-            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6">設定</h2>
                 
                 <!-- 🔥 Firebase リアルタイム同期設定 -->
@@ -2620,14 +3090,19 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Firebase API Key</label>
-                                <input type="text" id="firebase-api-key" placeholder="AIzaSyC..." 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                <div class="relative">
+                                    <input type="password" id="firebase-api-key" placeholder="AIzaSyC..." 
+                                           class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                    <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePasswordVisibility('firebase-api-key', this)">
+                                        <i class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
+                                    </button>
+                                </div>
                                 <p class="text-xs text-gray-500 mt-1">Firebase Console → プロジェクト設定 → ウェブAPIキー</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Project ID</label>
                                 <input type="text" id="firebase-project-id" placeholder="taskflow-pro-xxxxx" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500" style="max-width: 100%; box-sizing: border-box;">
                             </div>
                             <div class="flex space-x-2">
                                 <button id="firebase-test-btn" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm">
@@ -2713,25 +3188,33 @@
                                 <label class="text-sm font-medium text-gray-700">カレンダー同期</label>
                                 <p class="text-sm text-gray-500">タスクをGoogle Calendar・Tasksと同期します（予定開始日時設定済みタスクのみ）</p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="calendar-sync-toggle" class="sr-only">
-                                <div class="w-11 h-6 bg-gray-200 rounded-full relative">
-                                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
-                                </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="calendar-sync-toggle">
+                                <span class="toggle-slider"></span>
                             </label>
                         </div>
                         
                         <div id="calendar-settings" class="hidden space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Google Calendar API Key</label>
-                                <input type="text" id="google-api-key" placeholder="AIzaSyC..." 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <div class="relative">
+                                    <input type="password" id="google-api-key" placeholder="AIzaSyC..." 
+                                           class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePasswordVisibility('google-api-key', this)">
+                                        <i class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
+                                    </button>
+                                </div>
                                 <p class="text-xs text-gray-500 mt-1">Google Cloud ConsoleでCalendar API・Tasks APIを有効化し、APIキーを取得してください</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Google Client ID</label>
-                                <input type="text" id="google-client-id" placeholder="123456789-abc...apps.googleusercontent.com" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <div class="relative">
+                                    <input type="password" id="google-client-id" placeholder="123456789-abc...googleusercontent.com" 
+                                           class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePasswordVisibility('google-client-id', this)">
+                                        <i class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
+                                    </button>
+                                </div>
                                 <p class="text-xs text-gray-500 mt-1">OAuth 2.0認証用のクライアントIDを入力してください</p>
                             </div>
                             <div>
@@ -2759,11 +3242,9 @@
                                         <label class="text-sm font-medium text-gray-700">自動同期</label>
                                         <p class="text-xs text-gray-500">タスクの変更時に自動的にカレンダーと同期します</p>
                                     </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="auto-sync-toggle" class="sr-only" checked>
-                                        <div class="w-9 h-5 bg-gray-200 rounded-full relative">
-                                            <div class="dot absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition transform translate-x-4 bg-blue-600"></div>
-                                        </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="auto-sync-toggle" checked>
+                                        <span class="toggle-slider"></span>
                                     </label>
                                 </div>
                             </div>
@@ -2773,24 +3254,7 @@
                     </div>
                 </div>
 
-                <!-- 通知設定 -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">通知設定</h3>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <label class="text-sm font-medium text-gray-700">デスクトップ通知</label>
-                                <p class="text-sm text-gray-500">期限が近づいたタスクを通知します</p>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="desktop-notifications-toggle" class="sr-only">
-                                <div class="w-11 h-6 bg-gray-200 rounded-full relative">
-                                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                </div>
+
 
                 <!-- データ管理 -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -2824,7 +3288,7 @@
                 </button>
             </div>
             
-            <form id="task-form" class="p-6 space-y-4 pb-20">
+            <form id="task-form" class="p-6 space-y-4 pb-24">
                 <input type="hidden" id="task-id">
                 
                 <!-- 基本情報セクション -->
@@ -2907,7 +3371,7 @@
             </form>
             
             <!-- 固定ボタンエリア - フォーム外に配置 -->
-            <div class="flex justify-end space-x-3 pt-4 border-t bg-white sticky bottom-0 z-10 shadow-lg">
+            <div class="flex justify-end space-x-3 pt-4 px-6 border-t bg-white sticky bottom-0 z-10 shadow-lg modal-footer">
                 <button type="button" id="cancel-btn" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
                     キャンセル
                 </button>
@@ -2928,7 +3392,7 @@
                 </button>
             </div>
             
-            <form id="client-form" class="p-6 space-y-4 pb-20">
+            <form id="client-form" class="p-6 space-y-4 pb-24">
                 <input type="hidden" id="client-id" style="width: 90%; max-width: 90%;">
                 
                 <div>
@@ -2963,7 +3427,7 @@
             </form>
             
             <!-- 固定ボタンエリア - フォーム外に配置 -->
-            <div class="flex justify-end space-x-3 pt-4 border-t bg-white sticky bottom-0 z-10 shadow-lg">
+            <div class="flex justify-end space-x-3 pt-4 px-6 border-t bg-white sticky bottom-0 z-10 shadow-lg modal-footer">
                 <button type="button" id="cancel-client-btn" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
                     キャンセル
                 </button>
@@ -2984,44 +3448,44 @@
                 </button>
             </div>
             
-            <form id="client-form" class="p-6 space-y-4 pb-20">
-                <input type="hidden" id="client-id">
+            <form id="client-form-edit" class="p-6 space-y-4 pb-24">
+                <input type="hidden" id="client-id-edit">
                 
                 <div>
-                    <label for="client-name" class="block text-sm font-medium text-gray-700 mb-1">クライアント *</label>
-                    <input type="text" id="client-name" required
+                    <label for="client-name-edit" class="block text-sm font-medium text-gray-700 mb-1">クライアント *</label>
+                    <input type="text" id="client-name-edit" required
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 
                 <div>
-                    <label for="client-company" class="block text-sm font-medium text-gray-700 mb-1">担当者</label>
-                    <input type="text" id="client-company"
+                    <label for="client-company-edit" class="block text-sm font-medium text-gray-700 mb-1">担当者</label>
+                    <input type="text" id="client-company-edit"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 
                 <div>
-                    <label for="client-email" class="block text-sm font-medium text-gray-700 mb-1">メールアドレス</label>
-                    <input type="email" id="client-email"
+                    <label for="client-email-edit" class="block text-sm font-medium text-gray-700 mb-1">メールアドレス</label>
+                    <input type="email" id="client-email-edit"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 
                 <div>
-                    <label for="client-phone" class="block text-sm font-medium text-gray-700 mb-1">電話番号</label>
-                    <input type="tel" id="client-phone"
+                    <label for="client-phone-edit" class="block text-sm font-medium text-gray-700 mb-1">電話番号</label>
+                    <input type="tel" id="client-phone-edit"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 
                 <div>
                     <label for="client-notes" class="block text-sm font-medium text-gray-700 mb-1">メモ</label>
-                    <textarea id="client-notes" rows="3"
+                    <textarea id="client-notes-edit" rows="3"
                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
                 </div>
                 
             </form>
             
             <!-- 固定ボタンエリア - フォーム外に配置 -->
-            <div class="flex justify-end space-x-3 pt-4 border-t bg-white sticky bottom-0 z-10 shadow-lg">
-                <button type="button" id="cancel-client-btn" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+            <div class="flex justify-end space-x-3 pt-4 px-6 border-t bg-white sticky bottom-0 z-10 shadow-lg modal-footer">
+                <button type="button" id="cancel-client-edit-btn" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
                     キャンセル
                 </button>
                 <button type="submit" form="client-form" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
@@ -3032,6 +3496,20 @@
     </div>
 
     <script>
+        // APIキー表示/非表示の切り替え機能
+        function togglePasswordVisibility(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash text-gray-400 hover:text-gray-600';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye text-gray-400 hover:text-gray-600';
+            }
+        }
+
         class TaskFlowApp {
             constructor() {
                 this.tasks = JSON.parse(localStorage.getItem('taskflow_tasks') || '[]');
@@ -4530,7 +5008,7 @@
                     this.saveSettings();
                 });
                 
-                document.getElementById('desktop-notifications-toggle').addEventListener('change', () => this.saveSettings());
+
                 document.getElementById('google-auth-btn').addEventListener('click', () => this.authenticateGoogleCalendar());
                 document.getElementById('test-calendar-connection').addEventListener('click', () => this.testCalendarConnection());
                 document.getElementById('sync-tasks-to-calendar').addEventListener('click', () => this.syncTasksToCalendar());
@@ -4741,7 +5219,7 @@
                     calendarId: document.getElementById('calendar-id').value,
                     googleApiKey: document.getElementById('google-api-key').value,
                     googleClientId: document.getElementById('google-client-id').value,
-                    desktopNotifications: document.getElementById('desktop-notifications-toggle').checked,
+
                     // 🔥 Firebase設定を追加
                     firebaseEnabled: this.firebaseEnabled,
                     firebaseConfig: this.firebaseConfig,
@@ -4788,9 +5266,7 @@
                 if (this.settings.googleClientId) {
                     document.getElementById('google-client-id').value = this.settings.googleClientId;
                 }
-                if (this.settings.desktopNotifications) {
-                    document.getElementById('desktop-notifications-toggle').checked = true;
-                }
+
                 if (this.settings.autoSync !== undefined) {
                     document.getElementById('auto-sync-toggle').checked = this.settings.autoSync;
                 } else {
@@ -6768,14 +7244,14 @@
                 
                 monthlyData.forEach(clientData => {
                     const card = document.createElement('div');
-                    card.className = 'bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200';
+                    card.className = 'bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2 border border-blue-200';
                     
                     card.innerHTML = `
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-semibold text-gray-900">${clientData.client.name}</h4>
-                            <i class="fas fa-user-circle text-blue-600"></i>
+                        <div class="flex items-center justify-between mb-1">
+                            <h4 class="font-semibold text-gray-900 text-sm">${clientData.client.name}</h4>
+                            <i class="fas fa-user-circle text-blue-600 text-sm"></i>
                         </div>
-                        <div class="space-y-1 text-sm">
+                        <div class="space-y-0.5 text-xs">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">作業時間:</span>
                                 <span class="font-semibold text-blue-700">${this.formatHoursToReadable(clientData.totalHours)}</span>
