@@ -253,6 +253,16 @@
             height: 20px;
         }
 
+        /* チェックボックス本体を完全に非表示にする（スマホ表示の裏側表示問題を修正） */
+        .toggle-switch input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
         .toggle-slider {
             position: absolute;
             cursor: pointer;
@@ -297,6 +307,28 @@
         /* ホバーエフェクト */
         .toggle-switch:hover .toggle-slider {
             background-color: #9ca3af;
+        }
+        
+        /* モバイル端末でのチェックボックス表示問題を防ぐ追加設定 */
+        @media screen and (max-width: 768px) {
+            .toggle-switch input[type="checkbox"] {
+                position: absolute !important;
+                opacity: 0 !important;
+                width: 0 !important;
+                height: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+                z-index: -1 !important;
+                overflow: hidden !important;
+                clip: rect(0, 0, 0, 0) !important;
+                -webkit-clip-path: inset(50%) !important;
+                clip-path: inset(50%) !important;
+            }
+            
+            .toggle-switch {
+                overflow: hidden !important;
+            }
+        }
         }
 
         input:checked + .toggle-switch:hover .toggle-slider {
@@ -1346,6 +1378,19 @@
                 width: 40px !important;
                 height: 20px !important;
                 flex-shrink: 0 !important;
+            }
+            
+            /* スマホ表示でのチェックボックス裏側表示問題を完全に修正 */
+            #settings-view .toggle-switch input[type="checkbox"] {
+                position: absolute !important;
+                opacity: 0 !important;
+                width: 0 !important;
+                height: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+                z-index: -1 !important;
+                overflow: hidden !important;
+                clip: rect(0, 0, 0, 0) !important;
             }
             
             /* 設定項目の配置調整 */
