@@ -329,6 +329,263 @@
                 overflow: hidden !important;
             }
         }
+
+        /* サブタスク入力項目のレスポンシブ最適化 - 1行レイアウト */
+        #subtasks-container > div {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            gap: 6px !important;
+            margin-bottom: 8px !important;
+            width: calc(100% - 0px) !important;
+            max-width: calc(100% - 0px) !important;
+            padding: 5px !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 6px !important;
+            background-color: #fafafa !important;
+            transition: background-color 0.2s ease !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+        }
+
+        #subtasks-container > div:hover {
+            background-color: #f0f9ff !important;
+            border-color: #bfdbfe !important;
+        }
+
+        /* サブタスクコンテナ全体の制約 */
+        #subtasks-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+        }
+
+        /* サブタスクの各入力要素 - インラインスタイル上書き */
+        #subtasks-container input[type="checkbox"] {
+            flex: 0 0 16px !important;
+            width: 16px !important;
+            max-width: 16px !important;
+            min-width: 16px !important;
+            height: 16px !important;
+            margin: 0 !important;
+        }
+
+        #subtasks-container input[type="text"] {
+            flex: 1 1 auto !important;
+            min-width: 80px !important;
+            width: 0 !important;
+            max-width: none !important;
+            padding: 4px 6px !important;
+            font-size: 14px !important;
+        }
+
+        #subtasks-container input[type="date"] {
+            flex: 0 0 110px !important;
+            min-width: 110px !important;
+            max-width: 110px !important;
+            width: 110px !important;
+            padding: 4px 4px !important;
+            font-size: 13px !important;
+        }
+
+        #subtasks-container button.remove-subtask {
+            flex: 0 0 28px !important;
+            width: 28px !important;
+            max-width: 28px !important;
+            min-width: 28px !important;
+            height: 28px !important;
+            padding: 4px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 4px !important;
+        }
+
+        /* スマホ表示でのサブタスク項目最適化 - 1行レイアウト */
+        @media screen and (max-width: 640px) {
+            #subtasks-container > div {
+                flex-wrap: nowrap !important;
+                gap: 3px !important;
+                padding: 4px !important;
+                border: 1px solid #e5e7eb !important;
+                border-radius: 4px !important;
+                margin-bottom: 6px !important;
+                background-color: #f9fafb !important;
+                min-height: 32px !important;
+                align-items: center !important;
+                width: calc(100% - 0px) !important;
+                max-width: calc(100% - 0px) !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+            }
+            
+            #subtasks-container input[type="checkbox"] {
+                flex: 0 0 14px !important;
+                width: 14px !important;
+                max-width: 14px !important;
+                min-width: 14px !important;
+                height: 14px !important;
+                margin: 0 !important;
+            }
+            
+            #subtasks-container input[type="text"] {
+                flex: 1 1 auto !important;
+                min-width: 60px !important;
+                width: 0 !important;
+                max-width: none !important;
+                font-size: 13px !important;
+                padding: 3px 4px !important;
+            }
+            
+            #subtasks-container input[type="date"] {
+                flex: 0 0 90px !important;
+                min-width: 90px !important;
+                max-width: 90px !important;
+                width: 90px !important;
+                font-size: 11px !important;
+                padding: 3px 2px !important;
+            }
+            
+            #subtasks-container button.remove-subtask {
+                flex: 0 0 24px !important;
+                width: 24px !important;
+                max-width: 24px !important;
+                min-width: 24px !important;
+                height: 24px !important;
+                padding: 2px !important;
+                margin: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            
+            #subtasks-container button.remove-subtask i {
+                font-size: 10px !important;
+            }
+
+            /* タスクモーダルの2列グリッド調整 */
+            #task-modal .grid.grid-cols-1.md\\:grid-cols-2 {
+                grid-template-columns: 1fr !important;
+                gap: 6px !important;
+            }
+
+            /* セレクトボックスの文字サイズ調整 */
+            #task-modal select {
+                font-size: 14px !important;
+                padding: 6px 8px !important;
+                min-height: 36px !important;
+            }
+        }
+
+        /* 極小画面（375px以下）での最適化 - より密なレイアウト */
+        @media screen and (max-width: 375px) {
+            #subtasks-container > div {
+                gap: 2px !important;
+                padding: 3px !important;
+                width: calc(100% - 0px) !important;
+                max-width: calc(100% - 0px) !important;
+                min-height: 30px !important;
+            }
+            
+            #subtasks-container input[type="checkbox"] {
+                flex: 0 0 12px !important;
+                width: 12px !important;
+                max-width: 12px !important;
+                min-width: 12px !important;
+                height: 12px !important;
+            }
+            
+            #subtasks-container input[type="text"] {
+                flex: 1 1 auto !important;
+                min-width: 50px !important;
+                width: 0 !important;
+                max-width: none !important;
+                font-size: 12px !important;
+                padding: 2px 3px !important;
+            }
+            
+            #subtasks-container input[type="date"] {
+                flex: 0 0 80px !important;
+                min-width: 80px !important;
+                max-width: 80px !important;
+                width: 80px !important;
+                font-size: 10px !important;
+                padding: 2px 1px !important;
+            }
+            
+            #subtasks-container button.remove-subtask {
+                flex: 0 0 20px !important;
+                width: 20px !important;
+                max-width: 20px !important;
+                min-width: 20px !important;
+                height: 20px !important;
+                padding: 1px !important;
+            }
+
+            #subtasks-container button.remove-subtask i {
+                font-size: 8px !important;
+            }
+
+            /* セレクトボックスの更なる調整 */
+            #task-modal select {
+                font-size: 13px !important;
+                padding: 5px 6px !important;
+                min-height: 32px !important;
+            }
+
+            #task-modal select option {
+                font-size: 12px !important;
+            }
+        }
+
+        /* タブレット表示でのサブタスク項目最適化 - 1行レイアウト */
+        @media screen and (min-width: 641px) and (max-width: 1024px) {
+            #subtasks-container > div {
+                gap: 5px !important;
+                padding: 5px !important;
+                width: calc(100% - 0px) !important;
+                max-width: calc(100% - 0px) !important;
+            }
+            
+            #subtasks-container input[type="checkbox"] {
+                flex: 0 0 15px !important;
+                width: 15px !important;
+                max-width: 15px !important;
+                min-width: 15px !important;
+                height: 15px !important;
+            }
+            
+            #subtasks-container input[type="text"] {
+                flex: 1 1 auto !important;
+                min-width: 100px !important;
+                width: 0 !important;
+                max-width: none !important;
+                font-size: 14px !important;
+            }
+            
+            #subtasks-container input[type="date"] {
+                flex: 0 0 100px !important;
+                min-width: 100px !important;
+                max-width: 100px !important;
+                width: 100px !important;
+                font-size: 13px !important;
+            }
+            
+            #subtasks-container button.remove-subtask {
+                flex: 0 0 26px !important;
+                width: 26px !important;
+                max-width: 26px !important;
+                min-width: 26px !important;
+                height: 26px !important;
+            }
+
+            /* セレクトボックスのタブレット表示最適化 */
+            #task-modal select {
+                font-size: 14px !important;
+                min-height: 38px !important;
+                padding: 6px 10px !important;
+            }
         }
 
         input:checked + .toggle-switch:hover .toggle-slider {
@@ -1341,6 +1598,251 @@
         #settings-view .relative {
             width: 100% !important;
             max-width: 100% !important;
+        }
+
+        /* タスクモーダル全体のレスポンシブ最適化 */
+        #task-modal input,
+        #task-modal textarea,
+        #task-modal select {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            min-height: 38px !important;
+            padding: 6px 12px !important;
+            font-size: 14px !important;
+            line-height: 1.5 !important;
+        }
+        
+        /* フォーム内の要素のインラインスタイルを強制上書き */
+        #task-form input[style*="width"],
+        #task-form textarea[style*="width"],
+        #task-form select[style*="width"] {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        
+        /* グリッド内要素の統一幅設定 - 最高優先度 */
+        #task-form .grid input[style*="width"],
+        #task-form .grid select[style*="width"] {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* 全画面サイズでのインラインスタイル完全無効化 - 最高優先度 */
+        #task-modal #task-priority,
+        #task-modal #task-client,
+        #task-modal #task-deadline, 
+        #task-modal #task-scheduled {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+            min-height: 38px !important;
+            height: auto !important;
+            padding: 6px 12px !important;
+            font-size: 14px !important;
+            line-height: 1.5 !important;
+        }
+
+        /* インラインスタイル属性を持つ要素の強制上書き - 超高優先度 */
+        #task-modal select[style*="90%"],
+        #task-modal input[style*="90%"],
+        #task-modal select[style*="width"],
+        #task-modal input[style*="width"] {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* グリッド内要素の絶対的統一 */
+        #task-modal .grid > div > select,
+        #task-modal .grid > div > input {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        /* JavaScriptで追加される強制クラス */
+        .grid-element-forced {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* 特定IDによる絶対制御 */
+        #task-priority.grid-element-forced,
+        #task-client.grid-element-forced,
+        #task-deadline.grid-element-forced,
+        #task-scheduled.grid-element-forced {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* 大画面でのインラインスタイル強制上書き */
+        @media screen and (min-width: 1200px) {
+            #task-form input[style],
+            #task-form select[style],
+            #task-form textarea[style] {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            
+            #task-form .grid input[style],
+            #task-form .grid select[style] {
+                width: 100% !important;
+                max-width: 350px !important;
+            }
+        }
+        
+        /* サブタスクコンテナの基本設定 */
+        #subtasks-container {
+            width: 100% !important;
+            overflow-x: hidden !important;
+        }
+        
+        /* サブタスク内の要素も強制的に適正サイズに */
+        #subtasks-container input[style*="width"] {
+            width: auto !important;
+            max-width: none !important;
+        }
+
+        /* セレクトボックスのテキスト省略対応 */
+        #task-modal select {
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+        }
+
+        #task-modal select option {
+            max-width: none !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+            text-overflow: ellipsis !important;
+        }
+
+        /* PC画面でのフォーム要素統一最適化 */
+        @media screen and (min-width: 769px) {
+            /* グリッド内のすべての入力要素を統一 - 超高優先度 */
+            #task-modal .grid.grid-cols-1.md\\:grid-cols-2 input,
+            #task-modal .grid.grid-cols-1.md\\:grid-cols-2 select,
+            #task-modal .grid input,
+            #task-modal .grid select {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 180px !important;
+                padding: 6px 12px !important;
+                font-size: 14px !important;
+                line-height: 1.5 !important;
+                min-height: 38px !important;
+                height: auto !important;
+                box-sizing: border-box !important;
+            }
+            
+            /* 特定要素の個別設定を削除して統一性を確保 */
+            #task-deadline,
+            #task-priority,
+            #task-scheduled,
+            #task-client {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            
+            /* グリッドアイテムの幅確保 */
+            #task-modal .grid.grid-cols-1.md\\:grid-cols-2 > div {
+                min-width: 0 !important;
+                width: 100% !important;
+                flex: 1 !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+            
+            /* グリッドレイアウト自体の最適化 */
+            #task-modal .grid.grid-cols-1.md\\:grid-cols-2 {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 20px !important;
+                width: 100% !important;
+                align-items: stretch !important;
+            }
+            
+            /* セレクトボックスのドロップダウンオプション最適化 */
+            #task-modal select option {
+                padding: 4px 8px !important;
+                font-size: 14px !important;
+                white-space: nowrap !important;
+            }
+            
+            /* インラインスタイルの上書き強制 */
+            #task-modal .grid.grid-cols-1.md\\:grid-cols-2 [style*="width"] {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+        }
+
+        /* 大画面（1200px以上）での追加最適化 */
+        @media screen and (min-width: 1200px) {
+            /* タスクモーダル全体の幅制限 */
+            #task-modal .bg-white {
+                max-width: 800px !important;
+                width: 90vw !important;
+                margin: 0 auto !important;
+            }
+            
+            /* フォーム要素の最大幅制限 */
+            #task-modal .grid.grid-cols-1.md\\:grid-cols-2 input,
+            #task-modal .grid.grid-cols-1.md\\:grid-cols-2 select {
+                max-width: 350px !important;
+                width: 100% !important;
+                min-height: 40px !important;
+                padding: 8px 12px !important;
+                font-size: 14px !important;
+            }
+            
+            /* グリッドレイアウトの調整 */
+            #task-modal .grid.grid-cols-1.md\\:grid-cols-2 {
+                gap: 24px !important;
+            }
+            
+            /* 90%幅設定の上書き */
+            #task-modal input[style*="90%"],
+            #task-modal select[style*="90%"],
+            #task-modal textarea[style*="90%"] {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: 40px !important;
+            }
+            
+            /* グリッド内要素の強制設定 */
+            #task-modal .grid input,
+            #task-modal .grid select {
+                width: 100% !important;
+                max-width: 350px !important;
+                min-height: 40px !important;
+            }
+        }
+
+        /* 超大画面（1600px以上）での最適化 */
+        @media screen and (min-width: 1600px) {
+            #task-modal .bg-white {
+                max-width: 900px !important;
+                width: 60vw !important;
+            }
+            
+            #task-modal .grid.grid-cols-1.md\\:grid-cols-2 input,
+            #task-modal .grid.grid-cols-1.md\\:grid-cols-2 select {
+                max-width: 400px !important;
+            }
+        }
+
+        /* グリッドレイアウトの調整 */
+        #task-modal .grid.grid-cols-1.md\\:grid-cols-2 {
+            gap: 16px !important;
+        }
+
+        @media screen and (max-width: 768px) {
+            #task-modal .grid.grid-cols-1.md\\:grid-cols-2 {
+                grid-template-columns: 1fr !important;
+                gap: 8px !important;
+            }
         }
         
         /* モバイル表示での設定画面最適化 */
@@ -3438,7 +3940,7 @@
             </div>
             
             <form id="client-form" class="p-6 space-y-4 pb-24">
-                <input type="hidden" id="client-id" style="width: 90%; max-width: 90%;">
+                <input type="hidden" id="client-id">
                 
                 <div>
                     <label for="client-name" class="block text-sm font-medium text-gray-700 mb-1">クライアント *</label>
@@ -3589,11 +4091,35 @@
                 this.applyModalFormWidth = () => {
                     const modal = document.getElementById('task-modal');
                     if (modal && !modal.classList.contains('hidden') && window.innerWidth >= 769) {
-                        // フォーム要素に90%幅を適用
+                        // フォーム要素に適切な幅を適用（サブタスク要素は除外）
                         const formElements = modal.querySelectorAll('input, select, textarea');
                         formElements.forEach(element => {
-                            element.style.width = '90%';
-                            element.style.maxWidth = '90%';
+                            // サブタスクコンテナ内の要素は除外
+                            if (!element.closest('#subtasks-container')) {
+                                // グリッドレイアウト内の要素かチェック
+                                const parentGrid = element.closest('.grid.grid-cols-1');
+                                const isGridElement = parentGrid && parentGrid.classList.contains('md:grid-cols-2');
+                                
+                                // 明示的にグリッド内要素として扱うべきID
+                                const gridElementIds = ['task-deadline', 'task-priority', 'task-scheduled', 'task-client'];
+                                const isSpecificGridElement = gridElementIds.includes(element.id);
+                                
+                                if (isGridElement || isSpecificGridElement) {
+                                    // グリッド内の要素は常に100%幅（90%設定を完全に無効化）
+                                    element.style.removeProperty('width');
+                                    element.style.removeProperty('max-width');
+                                    element.classList.add('grid-element-forced');
+                                } else {
+                                    // その他の要素のみ90%幅を適用
+                                    if (window.innerWidth >= 1200) {
+                                        element.style.width = '100%';
+                                        element.style.maxWidth = '100%';
+                                    } else {
+                                        element.style.width = '90%';
+                                        element.style.maxWidth = '90%';
+                                    }
+                                }
+                            }
                         });
                         
                         // iframe-wrapper要素にも90%幅を適用
@@ -3648,14 +4174,7 @@
                 // 🔥 Firebase初期化（設定の有無に関わらず実行）
                 setTimeout(() => this.initializeFirebase(), 1000);
                 
-                // デバッグ: 初期データの状況をログ出力
-                console.log('🚀 TaskFlow Pro 初期化完了');
-                console.log(`📁 顧客数: ${this.clients.length}`);
-                console.log(`📝 タスク数: ${this.tasks.length}`);
-                
-                if (this.clients.length === 0) {
-                    console.log('⚠️ 顧客データがありません。まず顧客を追加してください。');
-                }
+                // 初期化完了
             }
             
             // 🔥 Firebase同期機能
@@ -3663,25 +4182,18 @@
                 try {
                     // Firebase SDK 完全読み込み確認
                     if (!window.FirebaseSDK) {
-                        console.error('❌ Firebase SDK が読み込まれていません');
                         this.updateFirebaseStatus('error');
                         return Promise.reject(new Error('Firebase SDK not loaded'));
                     }
                     
                     if (!this.firebaseConfig) {
-                        console.log('⚠️ Firebase設定がまだ完了していません');
-                        console.log('🔧 Google認証ボタンを設定誘導モードに切り替え');
                         this.updateFirebaseStatus('pending');
                         // Google認証ボタンは有効なままにして設定を促す
                         this.enableGoogleSigninBtnWithConfig();
                         return Promise.resolve();
                     }
                     
-                    console.log('🔥 Firebase初期化開始...', {
-                        sdkLoaded: !!window.FirebaseSDK,
-                        configExists: !!this.firebaseConfig,
-                        domain: window.location.hostname
-                    });
+                    // Firebase初期化開始
                     
                     const { initializeApp, getFirestore, getAuth, signInAnonymously, onAuthStateChanged } = window.FirebaseSDK;
                     
@@ -3691,11 +4203,7 @@
                         authDomain: this.firebaseConfig.authDomain || `${this.firebaseConfig.projectId}.firebaseapp.com`
                     };
                     
-                    console.log('🔧 Firebase設定:', {
-                        projectId: adjustedConfig.projectId,
-                        authDomain: adjustedConfig.authDomain,
-                        currentDomain: window.location.hostname
-                    });
+                    // Firebase設定確認
                     
                     this.firebaseApp = initializeApp(adjustedConfig);
                     this.firestore = getFirestore(this.firebaseApp);
@@ -3709,20 +4217,14 @@
                     // Auth準備完了まで少し待機
                     await new Promise(resolve => setTimeout(resolve, 500));
                     
-                    console.log('✅ Firebase初期化完了:', {
-                        app: !!this.firebaseApp,
-                        firestore: !!this.firestore,
-                        auth: !!this.auth,
-                        authReady: this.auth && typeof this.auth.currentUser !== 'undefined',
-                        config: adjustedConfig.projectId
-                    });
+                    // Firebase初期化完了
                     
                     // 広告ブロッカー対策: オフライン永続化を有効にする
                     try {
                         const { enableNetwork, disableNetwork } = window.FirebaseSDK;
-                        console.log('🔧 Firebase設定最適化中...');
+                        // Firebase設定最適化中
                     } catch (error) {
-                        console.log('⚠️ 一部のFirebase機能が制限されています');
+                        // 一部のFirebase機能が制限されています
                     }
                     
                     // 🔐 Google認証方式（安全＆同期問題解決）
@@ -3730,31 +4232,26 @@
                         if (user && user.providerData[0]?.providerId === 'google.com') {
                             // Google認証済みユーザー
                             this.user = user;
-                            console.log('✅ Google認証成功:', {
-                                uid: user.uid,
-                                email: user.email,
-                                name: user.displayName,
-                                provider: 'Google'
-                            });
+                            // Google認証成功
                             
                             this.startFirebaseSync();
                             this.updateFirebaseStatus('success');
                             
                         } else if (user && user.isAnonymous) {
                             // 匿名ユーザーをGoogleに変換
-                            console.log('⚠️ 匿名ユーザー検出 - Google認証を推奨');
+                            // 匿名ユーザー検出
                             this.showGoogleAuthPrompt();
                             
                         } else {
                             // 未認証状態
-                            console.log('🔐 認証が必要です');
+                            // 認証が必要
                             this.showGoogleAuthPrompt();
                             this.updateFirebaseStatus('error');
                         }
                     });
                     
                 } catch (error) {
-                    console.error('❌ Firebase初期化エラー:', error);
+                    // Firebase初期化エラー
                     
                     // AdBlocker やブラウザ拡張機能によるブロックの検出
                     const isBlockedByClient = error.message?.includes('ERR_BLOCKED_BY_CLIENT') || 
@@ -3763,7 +4260,7 @@
                     
                     if (isBlockedByClient) {
                         console.warn('⚠️ Firebase接続がブロックされています (AdBlocker等)');
-                        console.log('🔄 オフラインモードで継続...');
+                        // オフラインモードで継続
                         this.updateFirebaseStatus('blocked');
                         
                         // オフラインモードのメッセージを表示
@@ -3781,10 +4278,7 @@
             
             async startFirebaseSync() {
                 if (!this.firestore || !this.user) {
-                    console.error('❌ Firebase同期開始失敗:', {
-                        firestore: !!this.firestore,
-                        user: !!this.user
-                    });
+                    // Firebase同期開始失敗
                     return;
                 }
                 
@@ -3792,7 +4286,7 @@
                     const { doc, onSnapshot, getDoc } = window.FirebaseSDK;
                     
                     // 事前接続テスト
-                    console.log('🔍 Firebase接続テスト開始...');
+                    // Firebase接続テスト開始
                     const userDocRef = doc(this.firestore, 'users', this.user.uid);
                     
                     // まず一度読み取りテスト
@@ -3880,14 +4374,14 @@
                     // 初回アップロード
                     this.uploadToFirebase();
                     
-                    console.log('✅ Firebaseリアルタイム同期開始');
+                    // Firebaseリアルタイム同期開始
                     this.updateFirebaseStatus('success');
                     
                     // デバッグ情報を定期的に出力
                     this.startSyncMonitoring();
                     
                 } catch (error) {
-                    console.error('❌ Firebase同期開始エラー:', error);
+                    // Firebase同期開始エラー
                     
                     // ネットワークエラーやブロックされたクライアントの検出
                     const isNetworkError = error.message?.includes('ERR_BLOCKED_BY_CLIENT') ||
@@ -3938,7 +4432,7 @@
                     });
                     
                 } catch (error) {
-                    console.error('❌ Firebaseアップロードエラー:', error);
+                    // Firebaseアップロードエラー
                     
                     // ネットワークエラーやブロックされたクライアントの検出
                     const isNetworkError = error.message?.includes('ERR_BLOCKED_BY_CLIENT') ||
@@ -4331,7 +4825,7 @@
                     
                     // Firebase SDK確認
                     if (!window.FirebaseSDK || !window.FirebaseSDK.GoogleAuthProvider) {
-                        console.error('❌ Firebase SDK未読み込み');
+                        // Firebase SDK未読み込み
                         alert('❌ ページを再読み込みしてから再試行してください。');
                         return;
                     }
@@ -4552,7 +5046,7 @@
                     
                     // Firebase初期化テスト
                     const testApp = initializeApp(config, 'test-app');
-                    console.log('✅ Firebase App初期化成功');
+                    // Firebase App初期化成功
                     
                     // Firestore初期化テスト（データアクセスなし）
                     const testFirestore = getFirestore(testApp);
@@ -4560,7 +5054,7 @@
                     
                     // Auth初期化テスト（サインインなし）
                     const testAuth = getAuth(testApp);
-                    console.log('✅ Firebase Auth初期化成功');
+                    // Firebase Auth初期化成功
                     
                     // 設定が有効であることを確認
                     if (!testApp || !testFirestore || !testAuth) {
@@ -4574,7 +5068,7 @@
                     alert('✅ Firebase接続テスト成功！設定を保存してください。');
                     
                 } catch (error) {
-                    console.error('❌ Firebase接続テストエラー:', error);
+                    // Firebase接続テストエラー
                     this.updateFirebaseStatus('error');
                     
                     // エラーの種類に応じた具体的な解決策を提示
@@ -5536,13 +6030,14 @@
             addSubtaskInput(title = '', completed = false, deadline = '') {
                 const container = document.getElementById('subtasks-container');
                 const subtaskDiv = document.createElement('div');
-                subtaskDiv.className = 'flex items-center gap-2 mb-2';
+                // レスポンシブ対応のクラスを適用
+                subtaskDiv.className = 'subtask-item flex items-center gap-2 mb-2 w-full';
                 
                 subtaskDiv.innerHTML = `
-                    <input type="checkbox" ${completed ? 'checked' : ''} class="custom-checkbox">
-                    <input type="text" placeholder="サブタスク" value="${title}" class="flex-1 px-2 py-1 text-sm border border-gray-300 rounded">
-                    <input type="date" value="${deadline}" class="px-2 py-1 text-sm border border-gray-300 rounded">
-                    <button type="button" class="text-red-500 hover:text-red-700 remove-subtask">
+                    <input type="checkbox" ${completed ? 'checked' : ''} class="custom-checkbox subtask-checkbox flex-shrink-0">
+                    <input type="text" placeholder="サブタスク" value="${title}" class="subtask-title px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <input type="date" value="${deadline}" class="subtask-date px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <button type="button" class="text-red-500 hover:text-red-700 remove-subtask flex-shrink-0 p-1 rounded hover:bg-red-50 transition-colors">
                         <i class="fas fa-trash text-sm"></i>
                     </button>
                 `;
