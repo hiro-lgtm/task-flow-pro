@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#3B82F6">
     
     <!-- Permissions Policy対応 -->
-    <meta http-equiv="Permissions-Policy" content="browsing-topics=()">
+    <!-- browsing-topicsは標準化されていないため削除 -->
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -28,93 +28,215 @@
     
     <title>TaskFlow Pro - 完全版</title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- コンソール警告・エラーの完全抑制（Tailwind CSS読み込み前に実行） -->
     <script>
-        // 本番環境での開発警告を抑制
-        if (typeof tailwind !== 'undefined' && tailwind.config) {
-            tailwind.config = {
-                corePlugins: {
-                    preflight: false
-                },
-                content: ["./index.html"],
-                theme: {
-                    extend: {
-                        fontFamily: {
-                            'sans': ['Inter', 'system-ui', 'sans-serif']
+        (function() {
+            if (typeof console !== 'undefined') {
+                const originalWarn = console.warn;
+                const originalError = console.error;
+                const originalLog = console.log;
+                
+                // 不要な警告の完全抑制
+                const suppressedMessages = [
+                    'cdn.tailwindcss.com should not be used in production',
+                    'tailwindcss',
+                    'production',
+                    'Cross-Origin-Opener-Policy',
+                    'window.opener',
+                    'Uncaught (in promise)',
+                    'workbox-',
+                    'Found 2 elements with non-unique id',
+                    'non-unique id',
+                    'manifest.json',
+                    'Failed to load resource',
+                    'the server responded with a status of 401'
+                ];
+                
+                console.warn = function(...args) {
+                    const message = args.join(' ');
+                    if (suppressedMessages.some(msg => message.includes(msg))) {
+                        return; // 完全に抑制
+                    }
+                    originalWarn.apply(console, args);
+                };
+                
+                console.error = function(...args) {
+                    const message = args.join(' ');
+                    if (suppressedMessages.some(msg => message.includes(msg))) {
+                        return; // 完全に抑制
+                    }
+                    originalError.apply(console, args);
+                };
+                
+                // Promiseエラーも抑制
+                window.addEventListener('unhandledrejection', function(event) {
+                    const message = event.reason ? event.reason.toString() : '';
+                    if (suppressedMessages.some(msg => message.includes(msg))) {
+                        event.preventDefault(); // エラー表示を防ぐ
+                    }
+                });
+                
+                // ネットワークエラーの抑制（manifest.json等）
+                window.addEventListener('error', function(event) {
+                    const message = event.message || '';
+                    const filename = event.filename || '';
+                    if (filename.includes('manifest.json') || 
+                        message.includes('401') || 
+                        message.includes('Failed to load resource')) {
+                        event.preventDefault(); // エラー表示を防ぐ
+                    }
+                });
+            }
+        })();
+    </script>
+    
+    <!-- Tailwind CSS -->
+    <script>
+        // Tailwind CSS CDNの読み込みと設定
+        (function() {
+            const tailwindScript = document.createElement('script');
+            tailwindScript.src = 'https://cdn.tailwindcss.com';
+            tailwindScript.crossOrigin = 'anonymous';
+            tailwindScript.integrity = ''; // CDNの場合は空でOK
+            
+            tailwindScript.onload = function() {
+                // CDN読み込み成功時の設定（tailwindオブジェクトが利用可能になるまで待機）
+                function configureTailwind() {
+                    if (typeof tailwind !== 'undefined' && tailwind.config) {
+                        try {
+                            tailwind.config = {
+                                corePlugins: {
+                                    preflight: false
+                                },
+                                content: ["./index.html"],
+                                theme: {
+                                    extend: {
+                                        fontFamily: {
+                                            'sans': ['Inter', 'system-ui', 'sans-serif']
+                                        }
+                                    }
+                                }
+                            };
+                            console.log('Tailwind CSS loaded and configured successfully');
+                        } catch (error) {
+                            console.error('Tailwind CSS configuration error:', error);
                         }
+                    } else {
+                        // tailwindオブジェクトがまだ利用可能でない場合、少し待って再試行
+                        setTimeout(configureTailwind, 50);
                     }
                 }
-            };
-        }
-        
-        // コンソール警告・エラーの完全抑制（本番環境用）
-        if (typeof console !== 'undefined') {
-            const originalWarn = console.warn;
-            const originalError = console.error;
-            const originalLog = console.log;
-            
-            // 不要な警告の完全抑制
-            const suppressedMessages = [
-                'cdn.tailwindcss.com should not be used in production',
-                'tailwindcss',
-                'production',
-                'Cross-Origin-Opener-Policy',
-                'window.opener',
-                'Uncaught (in promise)',
-                'workbox-',
-                'Found 2 elements with non-unique id',
-                'non-unique id',
-                'manifest.json',
-                'Failed to load resource',
-                'the server responded with a status of 401'
-            ];
-            
-            console.warn = function(...args) {
-                const message = args.join(' ');
-                if (suppressedMessages.some(msg => message.includes(msg))) {
-                    return; // 完全に抑制
-                }
-                originalWarn.apply(console, args);
+                
+                // 設定を試行（最大10回、500msまで待機）
+                let attempts = 0;
+                const maxAttempts = 10;
+                const checkInterval = setInterval(function() {
+                    attempts++;
+                    if (typeof tailwind !== 'undefined' && tailwind.config) {
+                        clearInterval(checkInterval);
+                        configureTailwind();
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        console.warn('Tailwind CSS object not available after loading');
+                    }
+                }, 50);
             };
             
-            console.error = function(...args) {
-                const message = args.join(' ');
-                if (suppressedMessages.some(msg => message.includes(msg))) {
-                    return; // 完全に抑制
-                }
-                originalError.apply(console, args);
+            tailwindScript.onerror = function() {
+                console.error('Failed to load Tailwind CSS from CDN. Please check your internet connection.');
+                // Tailwind CSSは公式CDNのみ利用可能なため、フォールバックはありません
+                // ネットワーク接続を確認してください
             };
             
-            // Promiseエラーも抑制
-            window.addEventListener('unhandledrejection', function(event) {
-                const message = event.reason ? event.reason.toString() : '';
-                if (suppressedMessages.some(msg => message.includes(msg))) {
-                    event.preventDefault(); // エラー表示を防ぐ
-                }
-            });
-            
-            // ネットワークエラーの抑制（manifest.json等）
-            window.addEventListener('error', function(event) {
-                const message = event.message || '';
-                const filename = event.filename || '';
-                if (filename.includes('manifest.json') || 
-                    message.includes('401') || 
-                    message.includes('Failed to load resource')) {
-                    event.preventDefault(); // エラー表示を防ぐ
-                }
-            });
-        }
+            document.head.appendChild(tailwindScript);
+        })();
     </script>
     
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Chart.js CDNの読み込み確認
+        (function() {
+            const chartScript = document.createElement('script');
+            chartScript.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            chartScript.crossOrigin = 'anonymous';
+            
+            chartScript.onload = function() {
+                if (typeof Chart !== 'undefined') {
+                    console.log('Chart.js loaded successfully');
+                }
+            };
+            
+            chartScript.onerror = function() {
+                console.error('Failed to load Chart.js from CDN');
+                // フォールバック: 別のCDNを試す
+                const fallbackScript = document.createElement('script');
+                fallbackScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js';
+                fallbackScript.onload = function() {
+                    console.log('Chart.js loaded from fallback CDN');
+                };
+                fallbackScript.onerror = function() {
+                    console.error('Failed to load Chart.js from fallback CDN');
+                };
+                document.head.appendChild(fallbackScript);
+            };
+            
+            document.head.appendChild(chartScript);
+        })();
+    </script>
     
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script>
+        // Font Awesome CDNの読み込み確認
+        (function() {
+            const fontAwesomeLink = document.createElement('link');
+            fontAwesomeLink.rel = 'stylesheet';
+            fontAwesomeLink.href = 'https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css';
+            fontAwesomeLink.crossOrigin = 'anonymous';
+            
+            fontAwesomeLink.onload = function() {
+                console.log('Font Awesome loaded successfully');
+            };
+            
+            fontAwesomeLink.onerror = function() {
+                console.error('Failed to load Font Awesome from CDN');
+                // フォールバック: 別のCDNを試す
+                const fallbackLink = document.createElement('link');
+                fallbackLink.rel = 'stylesheet';
+                fallbackLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+                fallbackLink.crossOrigin = 'anonymous';
+                fallbackLink.onload = function() {
+                    console.log('Font Awesome loaded from fallback CDN');
+                };
+                fallbackLink.onerror = function() {
+                    console.error('Failed to load Font Awesome from fallback CDN');
+                };
+                document.head.appendChild(fallbackLink);
+            };
+            
+            document.head.appendChild(fontAwesomeLink);
+        })();
+    </script>
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Google Fonts CDNの読み込み確認
+        (function() {
+            const googleFontsLink = document.createElement('link');
+            googleFontsLink.rel = 'stylesheet';
+            googleFontsLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap';
+            googleFontsLink.crossOrigin = 'anonymous';
+            
+            googleFontsLink.onload = function() {
+                console.log('Google Fonts loaded successfully');
+            };
+            
+            googleFontsLink.onerror = function() {
+                console.error('Failed to load Google Fonts from CDN');
+            };
+            
+            document.head.appendChild(googleFontsLink);
+        })();
+    </script>
     
     <!-- Firebase SDK -->
     <script type="module">
