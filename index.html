@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -17,11 +17,7 @@
     <link rel="shortcut icon" href="favicon.svg" type="image/svg+xml">
     
     <!-- PWA用のアイコン -->
-    <link rel="apple-touch-icon" href="icon-192.svg">
-    <link rel="apple-touch-icon" sizes="120x120" href="icon-192.svg">
-    <link rel="apple-touch-icon" sizes="152x152" href="icon-192.svg">
     <link rel="apple-touch-icon" sizes="180x180" href="icon-192.svg">
-    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.svg">
     <meta name="msapplication-TileImage" content="icon-512.svg">
     <meta name="msapplication-TileColor" content="#3B82F6">
     <link rel="manifest" href="manifest.json">
@@ -269,6 +265,25 @@
             -webkit-user-select: text;
             -moz-user-select: text;
             user-select: text;
+        }
+
+        /* チャートコンテナ */
+        .chart-container {
+            height: 200px;
+        }
+
+        /* 入力フィールドの最大幅 */
+        .input-max-width {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* 顧客モーダルの初期スタイル（JavaScriptで動的に上書きされる） */
+        #client-modal .bg-white.rounded-lg.shadow-xl {
+            overflow: hidden;
+            overflow-y: auto;
+            display: block;
+            width: 330px;
         }
         
         /* iOS風のボタンエフェクト */
@@ -768,7 +783,6 @@
         /* ガントチャートナビゲーション全体をコンパクトに */
         .gantt-navigation {
             padding: 8px 16px !important;
-            min-height: auto !important;
         }
         
         .gantt-navigation .flex.items-center.gap-4 {
@@ -823,6 +837,7 @@
         /* PC表示での検索窓・フィルター調整 */
         .gantt-filters {
             background: rgba(255, 255, 255, 0.95);
+            -webkit-backdrop-filter: blur(8px);
             backdrop-filter: blur(8px);
             border-radius: 8px;
             padding: 12px;
@@ -1033,9 +1048,9 @@
             z-index: 50 !important;
             background-color: white !important;
             pointer-events: auto !important;
-            appearance: none !important;
             -webkit-appearance: none !important;
             -moz-appearance: none !important;
+            appearance: none !important;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
             background-position: right 10px center !important;
             background-repeat: no-repeat !important;
@@ -1213,8 +1228,10 @@
         .tab-button {
             position: relative;
             cursor: pointer;
+            -webkit-user-select: none;
             user-select: none;
             -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+            touch-action: manipulation;
         }
         
         .tab-button:active {
@@ -2086,7 +2103,6 @@
                 display: flex !important;
                 align-items: flex-start !important;
                 padding: 12px 8px !important;
-                min-height: auto !important;
                 gap: 8px;
             }
             
@@ -2486,10 +2502,7 @@
                 }
                 
                 /* PC表示でのスクロール制御改善 */
-                #task-modal .bg-white, #client-modal .bg-white {
-                    /* フレックス高さ計算を最適化 */
-                    min-height: auto !important;
-                }
+                /* フレックス高さ計算を最適化 - 必要に応じてスタイルを追加 */
                 
                 /* PC表示でのタスクフォーム要素間隔調整 */
                 #task-modal .space-y-4 > * + * {
@@ -2722,9 +2735,9 @@
                 
                 /* 小〜中画面でのプルダウン矢印の重複表示問題を解決 */
                 #task-modal select {
-                    appearance: none !important;
                     -webkit-appearance: none !important;
                     -moz-appearance: none !important;
+                    appearance: none !important;
                     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
                     background-position: right 10px center !important;
                     background-repeat: no-repeat !important;
@@ -2734,9 +2747,9 @@
                 
                 /* 顧客モーダルのselect要素の矢印統一 */
                 #client-modal select {
-                    appearance: none !important;
                     -webkit-appearance: none !important;
                     -moz-appearance: none !important;
+                    appearance: none !important;
                     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
                     background-position: right 10px center !important;
                     background-repeat: no-repeat !important;
@@ -3012,9 +3025,9 @@
                 
                 /* ガントエリアのselect要素の矢印統一 */
                 #gantt-view:not(.hidden) .gantt-filters select {
-                    appearance: none !important;
                     -webkit-appearance: none !important;
                     -moz-appearance: none !important;
+                    appearance: none !important;
                     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
                     background-position: right 10px center !important;
                     background-repeat: no-repeat !important;
@@ -3089,7 +3102,6 @@
                 /* モバイル表示でのナビゲーション全体をコンパクトに */
                 .gantt-navigation {
                     padding: 6px 12px !important;
-                    min-height: auto !important;
                 }
                 
                 .gantt-navigation .flex.items-center.gap-4 {
@@ -3284,9 +3296,9 @@
         select[id*="gantt"],
         select,
         *[style*="pointer-events"] select {
-            appearance: none !important;
             -webkit-appearance: none !important;
             -moz-appearance: none !important;
+            appearance: none !important;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
             background-position: right 10px center !important;
             background-repeat: no-repeat !important;
@@ -3381,23 +3393,23 @@
                     <!-- タブナビゲーション -->
                     <div class="flex justify-end flex-1 min-w-0 tab-navigation overflow-hidden">
                         <div class="grid grid-cols-5 w-full min-w-0 gap-1 sm:gap-4 tab-grid">
-                            <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 active flex flex-col items-center justify-center min-h-[48px]" data-tab="tasks" style="touch-action: manipulation;">
+                            <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 active flex flex-col items-center justify-center min-h-[48px]" data-tab="tasks">
                                 <i class="fas fa-list text-lg mb-1"></i>
                                 <span class="text-xs leading-none"><span class="hidden sm:inline">タスク</span><span class="sm:hidden">タスク</span></span>
                             </button>
-                            <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex flex-col items-center justify-center min-h-[48px]" data-tab="gantt" style="touch-action: manipulation;">
+                            <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex flex-col items-center justify-center min-h-[48px]" data-tab="gantt">
                                 <i class="fas fa-chart-gantt text-lg mb-1"></i>
                                 <span class="text-xs leading-none"><span class="hidden sm:inline">ガント</span><span class="sm:hidden">ガント</span></span>
                             </button>
-                            <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex flex-col items-center justify-center min-h-[48px]" data-tab="clients" style="touch-action: manipulation;">
+                            <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex flex-col items-center justify-center min-h-[48px]" data-tab="clients">
                                 <i class="fas fa-users text-lg mb-1"></i>
                                 <span class="text-xs leading-none"><span class="hidden sm:inline">顧客</span><span class="sm:hidden">顧客</span></span>
                             </button>
-                            <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex flex-col items-center justify-center min-h-[48px]" data-tab="reports" style="touch-action: manipulation;">
+                            <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex flex-col items-center justify-center min-h-[48px]" data-tab="reports">
                                 <i class="fas fa-chart-bar text-lg mb-1"></i>
                                 <span class="text-xs leading-none"><span class="hidden sm:inline">レポート</span><span class="sm:hidden">分析</span></span>
                             </button>
-                            <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex flex-col items-center justify-center min-h-[48px]" data-tab="settings" style="touch-action: manipulation;">
+                            <button class="tab-button border-b-2 border-transparent p-3 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex flex-col items-center justify-center min-h-[48px]" data-tab="settings">
                                 <i class="fas fa-cog text-lg mb-1"></i>
                                 <span class="text-xs leading-none"><span class="hidden sm:inline">設定</span><span class="sm:hidden">設定</span></span>
                             </button>
@@ -3461,7 +3473,7 @@
             </div>
 
             <!-- フローティングアクションボタン -->
-            <button id="add-task-btn" class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg ios-tap pulse-effect z-20">
+            <button id="add-task-btn" class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg ios-tap pulse-effect z-20" aria-label="新しいタスクを追加">
                 <i class="fas fa-plus text-xl"></i>
             </button>
         </div>
@@ -3630,21 +3642,21 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                         <h3 class="text-sm font-semibold text-gray-900 mb-3">タスクステータス分布</h3>
-                        <div style="height: 200px;">
+                        <div class="chart-container">
                             <canvas id="status-chart"></canvas>
                         </div>
                     </div>
                     
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                         <h3 class="text-sm font-semibold text-gray-900 mb-3">優先度別タスク</h3>
-                        <div style="height: 200px;">
+                        <div class="chart-container">
                             <canvas id="priority-chart"></canvas>
                         </div>
                     </div>
                     
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                         <h3 class="text-sm font-semibold text-gray-900 mb-3">月別作業時間推移</h3>
-                        <div style="height: 200px;">
+                        <div class="chart-container">
                             <canvas id="monthly-hours-chart"></canvas>
                         </div>
                     </div>
@@ -3762,7 +3774,7 @@
                                 <div class="relative">
                                     <input type="password" id="firebase-api-key" placeholder="AIzaSyC..." 
                                            class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                                    <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePasswordVisibility('firebase-api-key', this)">
+                                    <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePasswordVisibility('firebase-api-key', this)" aria-label="パスワードの表示/非表示を切り替え">
                                         <i class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
                                     </button>
                                 </div>
@@ -3771,7 +3783,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Project ID</label>
                                 <input type="text" id="firebase-project-id" placeholder="taskflow-pro-xxxxx" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500" style="max-width: 100%; box-sizing: border-box;">
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 input-max-width">
                             </div>
                             <div class="flex space-x-2">
                                 <button id="firebase-test-btn" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm">
@@ -3869,7 +3881,7 @@
                                 <div class="relative">
                                     <input type="password" id="google-api-key" placeholder="AIzaSyC..." 
                                            class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePasswordVisibility('google-api-key', this)">
+                                    <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePasswordVisibility('google-api-key', this)" aria-label="パスワードの表示/非表示を切り替え">
                                         <i class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
                                     </button>
                                 </div>
@@ -3880,7 +3892,7 @@
                                 <div class="relative">
                                     <input type="password" id="google-client-id" placeholder="123456789-abc...googleusercontent.com" 
                                            class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePasswordVisibility('google-client-id', this)">
+                                    <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePasswordVisibility('google-client-id', this)" aria-label="パスワードの表示/非表示を切り替え">
                                         <i class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
                                     </button>
                                 </div>
@@ -3952,7 +3964,7 @@
         <div class="bg-white rounded-lg shadow-xl">
             <div class="flex justify-between items-center p-6 border-b">
                 <h3 id="modal-title" class="text-lg font-semibold text-gray-900">新しいタスク</h3>
-                <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                <button id="close-modal" class="text-gray-400 hover:text-gray-600" aria-label="モーダルを閉じる">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -4053,10 +4065,10 @@
 
     <!-- 顧客編集モーダル -->
     <div id="client-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden backdrop-blur-sm" onclick="if(event.target === this) app.closeClientModal()">
-        <div class="bg-white rounded-lg shadow-xl" style="overflow: hidden auto !important;display: block !important;width: 330.723;width: 330px;">
+        <div class="bg-white rounded-lg shadow-xl">
             <div class="flex justify-between items-center p-6 border-b">
                 <h3 id="client-modal-title" class="text-lg font-semibold text-gray-900">新しい顧客</h3>
-                <button id="close-client-modal" class="text-gray-400 hover:text-gray-600">
+                <button id="close-client-modal" class="text-gray-400 hover:text-gray-600" aria-label="モーダルを閉じる">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -4112,7 +4124,7 @@
         <div class="bg-white rounded-lg shadow-xl">
             <div class="flex justify-between items-center p-6 border-b">
                 <h3 id="client-modal-title" class="text-lg font-semibold text-gray-900">新しい顧客</h3>
-                <button id="close-client-modal" class="text-gray-400 hover:text-gray-600">
+                <button id="close-client-modal" class="text-gray-400 hover:text-gray-600" aria-label="モーダルを閉じる">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
